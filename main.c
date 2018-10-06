@@ -17,7 +17,8 @@ void drawbg();
 UINT8 frame, i, j;
 INT8 jumpindex;
 UINT8 playery;
-UINT8 backgroundoffset;
+UINT8 backgroundtileoffset,backgroundscene;
+INT8 speed = 8;
 BYTE hasmovedx,hasmovedy,apressed,running;
 UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
 
@@ -73,26 +74,63 @@ void drawdino(BYTE jumping){
 		set_sprite_tile(6,8);
 	}
 	move_sprite(5,64,playery + 16);
-	move_sprite(6,72,playery + 16);		
-
+	move_sprite(6,72,playery + 16);	
 }
 
 void drawbg(){
-	set_bkg_tiles(0,10,32,2,map);
-	scroll_bkg(7,0);
+	// if(backgroundoffset == 0){
+	// 	if(backgroundscene == 0){
+	// 		backgroundscene = 1;
+	// 		set_bkg_tiles(0,10,32,2,mapBLK1);
+	// 	}
+	// 	else{
+	// 		backgroundscene = 0;
+	// 		set_bkg_tiles(0,10,32,2,mapBLK0);
+	// 	}
+	// }
+	
+	// backgroundoffset = backgroundoffset + speed;
+	// if(backgroundoffset > 256){  // 32 tiles, 8 pixels each
+	// 	backgroundoffset = 0;
+	// }		
+	// move_bkg(backgroundoffset,0);
+
+	// for each move of 8 (a tile) load in the next tile from the next scene
+	backgroundtileoffset++;
+	if(backgroundscene == 0){
+		set_bkg_tiles(0,10,backgroundtileoffset,1,mapBLK1);
+	}
+	else{
+		set_bkg_tiles(0,10,backgroundtileoffset,1,mapBLK0);
+	}	
+	
+
+	if(backgroundtileoffset>31){
+		backgroundtileoffset = 0;
+		if(backgroundscene == 0){
+			backgroundscene = 1;
+		}
+		else{
+			backgroundscene = 0;
+		}
+	}
+	scroll_bkg(speed,0);
 }
 
 void init() {
 	playery = 80;
-	backgroundoffset = 0;
+	backgroundtileoffset = 0;
+	backgroundscene = 0; 
 	
 	jumpindex = -1;
 	
 	DISPLAY_ON;						// Turn on the display
 
 	set_bkg_data(0, 11, BackgroundData);
+	
 
 	set_sprite_data(0, 9, SpritesData);   /* defines the sprite data */
+	
 	
 	set_sprite_tile(0,0);            /* defines the tiles numbers */
 	set_sprite_tile(1,1); 
@@ -105,7 +143,8 @@ void init() {
 		
 
 	cls(); // clear background
-	drawbg();
+	set_bkg_tiles(0,10,32,2,mapBLK0); // draw first background
+
 	drawdino(1);
 
 }
