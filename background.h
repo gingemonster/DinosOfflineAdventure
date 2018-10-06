@@ -1,6 +1,6 @@
 /*
 
- SPRITES.H
+ BACKGROUND.H
 
  Include File.
 
@@ -24,8 +24,8 @@
 
 
 /* Bank of tiles. */
-#define SpritesDataBank 0
+#define BackgroundDataBank 0
 /* Start of tile array. */
-extern unsigned char SpritesData[];
+extern unsigned char BackgroundData[];
 
-/* End of SPRITES.H */
+/* End of BACKGROUND.H */

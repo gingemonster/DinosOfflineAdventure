@@ -2,24 +2,30 @@
 #include <stdio.h>
 #include "sprites.h"
 #include "sprites.c"
+#include "background.h"
+#include "background.c"
+#include "map.h"
+#include "map.c"
 
 void init();
 void checkInput();
 void checkjumping();
 void updateSwitches();
 void drawdino(BYTE render, BYTE jumping);
-
-unsigned char alpha[] =
-{
-  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
+void drawbg();
 
 UINT8 frame, i, j;
 INT8 jumpindex;
 UINT8 player[2];
+UINT8 backgroundoffset;
 BYTE hasmovedx,hasmovedy,apressed;
 UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
+
+unsigned char EmptyBackgroundData[] = 
+{  
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
 
 void main() {
 
@@ -35,13 +41,12 @@ void main() {
 }
 
 void cls(){
-	set_bkg_data(0,0,alpha);		// Load 1 tiles into background memory
-
+	move_bkg(0,4);
 	for (j=0 ; j != 18 ; j++){
 		for (i=0 ; i != 20 ; i++){		
-			set_bkg_tiles(i,j,1,1,alpha);
+			set_bkg_tiles(i,j,1,1,0x0B);
 		}
-	}		
+	}	
 }
 
 void drawdino(BYTE render, BYTE jumping){
@@ -67,11 +72,21 @@ void drawdino(BYTE render, BYTE jumping){
 	}
 }
 
+void drawbg(){
+	set_bkg_tiles(0,10,32,2,map);
+}
+
 void init() {
 	player[0] = 64;
-	jumpindex = -1;
 	player[1] = 80;
+	backgroundoffset = 0;
+	
+	jumpindex = -1;
+	
 	DISPLAY_ON;						// Turn on the display
+
+	set_bkg_data(0, 11, BackgroundData);
+
 	set_sprite_data(0, 9, SpritesData);   /* defines the sprite data */
 	
 	set_sprite_tile(0,0);            /* defines the tiles numbers */
@@ -83,6 +98,7 @@ void init() {
 	set_sprite_tile(6,6);	
 
 	cls(); // clear background
+	drawbg();
 	drawdino(1);
 
 }
@@ -146,6 +162,7 @@ void checkInput() {
 	}
 
 	drawdino(hasmovedx | hasmovedy, hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
+	drawbg(hasmovedx);
 
 	if(hasmovedx)
 	{
