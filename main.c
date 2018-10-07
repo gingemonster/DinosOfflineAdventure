@@ -14,18 +14,19 @@ void updateSwitches();
 void drawdino(BYTE jumping);
 void drawbg();
 
-UINT8 frame, i, j;
-INT8 jumpindex;
-UINT8 playery;
-UINT8 backgroundtileoffset,backgroundscene;
-INT8 speed = 8;
-BYTE hasmovedx,hasmovedy,apressed,running;
-UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
+UINT8 frame,i,j,playery,backgroundtileoffset,backgroundscene,jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
+INT8 jumpindex,speed = 8;
+BYTE hasmovedy,apressed,running;
+
+unsigned char test[] =
+{
+  0x00,0x00
+};
 
 unsigned char EmptyBackgroundData[] = 
 {  
-  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+  0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
 };
 
 void main() {
@@ -39,7 +40,7 @@ void main() {
 		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory		
 		if(running) {
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			drawbg(hasmovedx);			
+			drawbg();			
 			delay(60);
 		}
 	}
@@ -78,48 +79,27 @@ void drawdino(BYTE jumping){
 }
 
 void drawbg(){
-	// if(backgroundoffset == 0){
-	// 	if(backgroundscene == 0){
-	// 		backgroundscene = 1;
-	// 		set_bkg_tiles(0,10,32,2,mapBLK1);
-	// 	}
-	// 	else{
-	// 		backgroundscene = 0;
-	// 		set_bkg_tiles(0,10,32,2,mapBLK0);
-	// 	}
-	// }
-	
-	// backgroundoffset = backgroundoffset + speed;
-	// if(backgroundoffset > 256){  // 32 tiles, 8 pixels each
-	// 	backgroundoffset = 0;
-	// }		
-	// move_bkg(backgroundoffset,0);
-
 	// for each move of 8 (a tile) load in the next tile from the next scene
-	backgroundtileoffset++;
-	if(backgroundscene == 0){
-		set_bkg_tiles(0,10,backgroundtileoffset,1,mapBLK1);
-	}
-	else{
-		set_bkg_tiles(0,10,backgroundtileoffset,1,mapBLK0);
-	}	
-	
-
-	if(backgroundtileoffset>31){
-		backgroundtileoffset = 0;
-		if(backgroundscene == 0){
-			backgroundscene = 1;
-		}
-		else{
-			backgroundscene = 0;
-		}
-	}
 	scroll_bkg(speed,0);
+	
+	set_bkg_tiles(backgroundtileoffset % 32,10,1,1,&map[backgroundtileoffset]);
+	set_bkg_tiles(backgroundtileoffset % 32,11,1,1,&map[backgroundtileoffset+32]);
+	
+	backgroundtileoffset++;
+	if(backgroundtileoffset==96){
+		// we have reached end of 2nd scene first row so reset offset to 0, first scene first row
+		backgroundtileoffset = 0;
+	}
+	else if(backgroundtileoffset==32){
+		// has reached end of 1st scene first row so jump to start of 2nd scene first row
+		backgroundtileoffset = 64;
+	}
+	
 }
 
 void init() {
 	playery = 80;
-	backgroundtileoffset = 0;
+	backgroundtileoffset = 64; // at start of next scene
 	backgroundscene = 0; 
 	
 	jumpindex = -1;
@@ -143,7 +123,7 @@ void init() {
 		
 
 	cls(); // clear background
-	set_bkg_tiles(0,10,32,2,mapBLK0); // draw first background
+	set_bkg_tiles(0,10,32,2,map); // draw first background
 
 	drawdino(1);
 
@@ -196,7 +176,6 @@ void checkInput() {
 	{
 		apressed = 0;
 	}
-
 
 	if (hasmovedy){
 		// if only moved Y (jump) we still want to wait for 60
