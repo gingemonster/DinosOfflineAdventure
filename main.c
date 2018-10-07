@@ -13,6 +13,7 @@ void checkjumping();
 void updateSwitches();
 void drawdino(UBYTE jumping);
 void drawbg();
+void playjump();
 
 UINT8 frame,i,j,playery,backgroundtileoffset,backgroundscene,jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
 INT8 jumpindex,speed = 8;
@@ -88,6 +89,71 @@ void drawbg(){
 	
 }
 
+void playjump(){
+	// se https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
+	// turn on sound
+	NR52_REG = 0x80; // turn on sound registers
+
+	// there are 8 buts in this order, a 1 enables that chanel a 0 disables
+	// 7	Channel 4 to Main SO2 output level control (Left)
+	// 6	Channel 3 to Main SO2 output level control (Left)
+	// 5	Channel 2 to Main SO2 output level control (Left)
+	// 4	Channel 1 to Main SO2 output level control (Left)
+	// 3	Channel 4 to Main SO1 output level control (Right)
+	// 2	Channel 3 to Main SO1 output level control (Right)
+	// 1	Channel 2 to Main SO1 output level control (Right)
+	// 0	Channel 1 to Main SO1 output level control (Right)
+	// so if you construct chanel 1 on as 0001 0001 (left and right chanel) which ix x11 in hex
+
+	// NR50 controls volume
+	// again 8 bytes
+	// 7	Output Vin to Main SO2 output level control (1: on; 0: off) LEAVE ALONE
+	// 6-4	SO2 (Left) Main Output level (volume)
+	// 3	Output Vin to Main SO1 output level control (1: on; 0: off) LEAVE ALONE
+	// 2-0	SO1 (Right) Main Output level (volume)	
+	// 	0111 0111 is 0x77 in hex and the max volume
+	NR50_REG = 0x77;
+
+	NR51_REG = 0x11; // select chanel 1 to output sound 
+
+	// chanel 1 register 0, Sweep settings
+	// 7	Unused
+	// 6-4	Sweep time(update rate) (if 0, sweeping is off)
+	// 3	Sweep Direction (1: decrease, 0: increase)
+	// 2-0	Sweep RtShift amount (if 0, sweeping is off)
+	// 0001 0110 is 0x1E, sweet time 1, sweep direction up, shift ammount 110 (6 decimal)
+	NR10_REG = 0x16; 
+
+	// chanel 1 register 1: Wave pattern duty and sound length
+	// Channels 1 2 and 4
+	// 7-0	Wave pattern duty cycle 0-256, duty cycle is how long a square wave is "on" vs "of" so 50% (128) is both equal.
+	// 0001 0000 is 0x10, duty cycle 16 of 256 which is 6.25% duty cycle
+	NR11_REG = 0x10;
+
+	// chanel 1 register 2: Volume Envelope (Makes the volume get louder or quieter each "tick")
+	// On Channels 1 2 and 4
+	// 7-4	(Initial) Channel Volume
+	// 3	Volume sweep direction (0: down; 1: up)
+	// 2-0	Length of each step in sweep (if 0, sweeping is off)
+	// NOTE: each step is n/64 seconds long, where n is 1-7	
+	// 0111 0011 is 0x73, volume 7, sweep down, step length 3
+	NR12_REG = 0x73;
+
+	// chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
+	// for Channels 1 2 and 3
+	// 7-0	8 Least Significant bits of frequency (3 MSbs are in register 4)
+	NR13_REG = 0x00;
+
+	// chanel 1 register 4: Playback and frequency MSbs
+	// Channels 1 2 3 and 4
+	// 7	Initialize (trigger channel start, AKA channel INIT) (Write only)
+	// 6	Consecutive select/length counter enable (Read/Write). When "0", regardless of the length of data on the NR11 register, sound can be produced consecutively.  When "1", sound is generated during the time period set by the length data contained in register NR11.  After the sound is ouput, the Sound 1 ON flag, at bit 0 of register NR52 is reset.
+	// 5-3	Unused
+	// 2-0	3 Most Significant bits of frequency
+	// 1000 0011 is 0x83, initialize, set consecutive,  
+	NR14_REG = 0x83;	
+}
+
 void init() {
 	playery = 80;
 	backgroundtileoffset = 32; // at start of next scene
@@ -153,6 +219,7 @@ void checkInput() {
 		apressed = 1;
 		// dont jump if already jumping
 		if(jumpindex==-1){
+			playjump();
 			jumpindex = 0;
 		}
 	}
