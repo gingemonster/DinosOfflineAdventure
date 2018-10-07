@@ -11,18 +11,19 @@ void init();
 void checkInput();
 void checkjumping();
 void updateSwitches();
-void drawdino(UBYTE jumping);
-void drawbg();
+void drawdino(UBYTE);
+void scrollbgandenemies();
 void playjump();
+void drawcacti(UINT8,UINT8,UINT8);
 
-UINT8 frame,i,j,playery,backgroundtileoffset,backgroundscene,jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
-INT8 jumpindex,speed = 8;
+const unsigned char blankmap[]={0x00};
+const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
+const UINT8 speed = 8;
+
+UINT8 frame,i,j,playery,backgroundtileoffset;
+INT8 jumpindex;
 UBYTE hasmovedy,apressed,running;
-
-unsigned char blankmap[] =
-{
-  0x00
-};
+UINT8 enemysprites[];
 
 void main() {
 
@@ -35,8 +36,8 @@ void main() {
 		if(running) {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			drawbg();			
-			delay(80);
+			scrollbgandenemies();			
+			delay(90);
 		}
 	}
 	
@@ -55,12 +56,12 @@ void cls(){
 void drawdino(UBYTE jumping){
 
 	frame = !frame;
-	move_sprite(0,64,playery);
-	move_sprite(1,72,playery);
-	move_sprite(2,80,playery);
+	move_sprite(0,34,playery);
+	move_sprite(1,42,playery);
+	move_sprite(2,50,playery);
 
-	move_sprite(3,64,playery + 8);
-	move_sprite(4,72,playery + 8);
+	move_sprite(3,34,playery + 8);
+	move_sprite(4,42,playery + 8);
 
 	if(frame || jumping){
 		set_sprite_tile(5,5); 
@@ -70,11 +71,20 @@ void drawdino(UBYTE jumping){
 		set_sprite_tile(5,7); 
 		set_sprite_tile(6,8);
 	}
-	move_sprite(5,64,playery + 16);
-	move_sprite(6,72,playery + 16);	
+	move_sprite(5,34,playery + 16);
+	move_sprite(6,42,playery + 16);	
 }
 
-void drawbg(){
+void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
+	set_sprite_tile(spritenum,9); 
+	set_sprite_tile(spritenum+1,10);
+	move_sprite(spritenum,x,y);
+	move_sprite(spritenum+1,x,y+8);
+	enemysprites[0] = spritenum;
+	enemysprites[1] = spritenum + 1;
+}
+
+void scrollbgandenemies(){
 	// for each move of 8 (a tile) load in the next tile from the next scene
 	scroll_bkg(speed,0);
 	
@@ -85,6 +95,12 @@ void drawbg(){
 	if(backgroundtileoffset==64){
 		// we have reached end of 2nd scene first row so reset offset to 0, first scene first row
 		backgroundtileoffset = 0;
+	}
+
+	// scroll enemies
+	for(i=0;i!=2;i++){
+		scroll_sprite(enemysprites[i],-speed,0);
+		scroll_sprite(enemysprites[i],-speed,0);
 	}
 	
 }
@@ -157,15 +173,15 @@ void playjump(){
 void init() {
 	playery = 80;
 	backgroundtileoffset = 32; // at start of next scene
-	backgroundscene = 0; 
 	
 	jumpindex = -1;
 	
 	DISPLAY_ON;						// Turn on the display
 
 	set_bkg_data(0, 11, BackgroundData);
-	set_sprite_data(0, 9, SpritesData);   /* defines the sprite data */
+	set_sprite_data(0, 12, SpritesData);   /* defines the sprite data */
 	
+	// dino
 	set_sprite_tile(0,0);            /* defines the tiles numbers */
 	set_sprite_tile(1,1); 
 	set_sprite_tile(2,2); 
@@ -173,6 +189,7 @@ void init() {
 	set_sprite_tile(4,4); 
 	set_sprite_tile(5,5); 
 	set_sprite_tile(6,6);
+
 		
 	cls(); // clear background
 
@@ -180,6 +197,7 @@ void init() {
 	set_bkg_tiles(0,11,32,1,&map[96]); // draw first background
 
 	drawdino(1);
+	drawcacti(90,81,7);
 
 }
 
