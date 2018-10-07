@@ -77,24 +77,20 @@ void drawbg(){
 	// for each move of 8 (a tile) load in the next tile from the next scene
 	scroll_bkg(speed,0);
 	
-	set_bkg_tiles(backgroundtileoffset % 32,10,1,1,&map[backgroundtileoffset]);
-	set_bkg_tiles(backgroundtileoffset % 32,11,1,1,&map[backgroundtileoffset+32]);
+	set_bkg_tiles(backgroundtileoffset % 32,10,1,1,&map[backgroundtileoffset]); // draw 1 tile from first line of map
+	set_bkg_tiles(backgroundtileoffset % 32,11,1,1,&map[backgroundtileoffset + 64]); // draw 1 tile from second line of map, offsetting map aray to the second line
 	
 	backgroundtileoffset++;
-	if(backgroundtileoffset==96){
+	if(backgroundtileoffset==64){
 		// we have reached end of 2nd scene first row so reset offset to 0, first scene first row
 		backgroundtileoffset = 0;
-	}
-	else if(backgroundtileoffset==32){
-		// has reached end of 1st scene first row so jump to start of 2nd scene first row
-		backgroundtileoffset = 64;
 	}
 	
 }
 
 void init() {
 	playery = 80;
-	backgroundtileoffset = 64; // at start of next scene
+	backgroundtileoffset = 32; // at start of next scene
 	backgroundscene = 0; 
 	
 	jumpindex = -1;
@@ -114,7 +110,8 @@ void init() {
 		
 	cls(); // clear background
 
-	set_bkg_tiles(0,10,32,2,map); // draw first background
+	set_bkg_tiles(0,10,32,1,map); // draw first background
+	set_bkg_tiles(0,11,32,1,&map[96]); // draw first background
 
 	drawdino(1);
 

@@ -7,7 +7,7 @@
  Info:
    Section       : 
    Bank          : 0
-   Map size      : 32 x 4
+   Map size      : 64 x 2
    Tile set      : D:\Users\BrianNorman\SkyDrive\gamingmonsters\gameboydev\projects\chromedino\background.gbr
    Plane count   : 1 plane (8 bits)
    Plane order   : Tiles are continues
@@ -18,8 +18,8 @@
 
 */
 
-#define mapWidth 32
-#define mapHeight 4
+#define mapWidth 64
+#define mapHeight 2
 #define mapBank 0
 
 extern unsigned char map[];
