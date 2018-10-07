@@ -7,6 +7,9 @@
 #include "map.h"
 #include "map.c"
 
+// =========================================================
+// Global variables, constants etc
+// =========================================================
 void init();
 void checkInput();
 void checkjumping();
@@ -17,6 +20,8 @@ void playjump();
 void playstep();
 void drawcacti(UINT8,UINT8,UINT8);
 void enablesound();
+void setupinitialsprites(); 
+void setupinitialbackground(); 
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
@@ -54,6 +59,10 @@ void cls(){
 	}
 	move_bkg(0,3);
 }
+
+// =========================================================
+// Screen drawing functions
+// =========================================================
 
 void drawdino(UBYTE jumping){
 
@@ -105,8 +114,11 @@ void scrollbgandenemies(){
 		scroll_sprite(enemysprites[i],-speed/2,0);
 		scroll_sprite(enemysprites[i],-speed/2,0);
 	}
-	
 }
+
+// =========================================================
+// Sound functions
+// =========================================================
 
 void enablesound(){
 	// turn on sound
@@ -185,15 +197,25 @@ void playstep(){
 	NR44_REG = 0xC0;
 }
 
+// =========================================================
+// Initialisation functions at very start of game
+// =========================================================
+
 void init() {
 	playery = 80;
-	backgroundtileoffset = 32; // at start of next scene
-	
 	jumpindex = -1;
-	
-	DISPLAY_ON;						// Turn on the display
 
-	set_bkg_data(0, 11, BackgroundData);
+	setupinitialbackground(); // create initial background
+	setupinitialsprites(); // create initial sprites
+
+	
+
+	drawdino(1);
+	drawcacti(90,81,7);
+	enablesound();
+}
+
+void setupinitialsprites(){
 	set_sprite_data(0, 12, SpritesData);   /* defines the sprite data */
 	
 	// dino
@@ -204,25 +226,28 @@ void init() {
 	set_sprite_tile(4,4); 
 	set_sprite_tile(5,5); 
 	set_sprite_tile(6,6);
-
-		
-	cls(); // clear background
-
-	set_bkg_tiles(0,10,32,1,map); // draw first background
-	set_bkg_tiles(0,11,32,1,&map[96]); // draw first background
-
-	drawdino(1);
-	drawcacti(90,81,7);
-	enablesound();
-
 }
 
+void setupinitialbackground(){
+	cls(); // clear background so that all tiles are blank to start with
+
+	set_bkg_data(0, 11, BackgroundData); // load background data into tileset
+	set_bkg_tiles(0,10,32,1,map); // draw first background row
+	set_bkg_tiles(0,11,32,1,&map[96]); // draw secind background row	
+
+	backgroundtileoffset = 32; // set next background to be draw offset at start of next scene
+}
 
 void updateSwitches() {
+	DISPLAY_ON;	
 	HIDE_WIN;
 	SHOW_SPRITES;
 	SHOW_BKG;
 }
+
+// =========================================================
+// Event handlers
+// =========================================================
 
 void checkjumping(){
 	if(jumpindex > -1){
