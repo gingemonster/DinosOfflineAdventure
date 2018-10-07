@@ -14,7 +14,9 @@ void updateSwitches();
 void drawdino(UBYTE);
 void scrollbgandenemies();
 void playjump();
+void playstep();
 void drawcacti(UINT8,UINT8,UINT8);
+void enablesound();
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
@@ -70,6 +72,7 @@ void drawdino(UBYTE jumping){
 	else{
 		set_sprite_tile(5,7); 
 		set_sprite_tile(6,8);
+		playstep();
 	}
 	move_sprite(5,34,playery + 16);
 	move_sprite(6,42,playery + 16);	
@@ -99,14 +102,13 @@ void scrollbgandenemies(){
 
 	// scroll enemies
 	for(i=0;i!=2;i++){
-		scroll_sprite(enemysprites[i],-speed,0);
-		scroll_sprite(enemysprites[i],-speed,0);
+		scroll_sprite(enemysprites[i],-speed/2,0);
+		scroll_sprite(enemysprites[i],-speed/2,0);
 	}
 	
 }
 
-void playjump(){
-	// se https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
+void enablesound(){
 	// turn on sound
 	NR52_REG = 0x80; // turn on sound registers
 
@@ -121,6 +123,10 @@ void playjump(){
 	// 0	Channel 1 to Main SO1 output level control (Right)
 	// so if you construct chanel 1 on as 0001 0001 (left and right chanel) which ix x11 in hex
 
+
+	NR51_REG = 0xFF; // set all chanels
+
+
 	// NR50 controls volume
 	// again 8 bytes
 	// 7	Output Vin to Main SO2 output level control (1: on; 0: off) LEAVE ALONE
@@ -129,9 +135,10 @@ void playjump(){
 	// 2-0	SO1 (Right) Main Output level (volume)	
 	// 	0111 0111 is 0x77 in hex and the max volume
 	NR50_REG = 0x77;
+}
 
-	NR51_REG = 0x11; // select chanel 1 to output sound 
-
+void playjump(){
+	// see https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
 	// chanel 1 register 0, Sweep settings
 	// 7	Unused
 	// 6-4	Sweep time(update rate) (if 0, sweeping is off)
@@ -142,8 +149,9 @@ void playjump(){
 
 	// chanel 1 register 1: Wave pattern duty and sound length
 	// Channels 1 2 and 4
-	// 7-0	Wave pattern duty cycle 0-256, duty cycle is how long a square wave is "on" vs "of" so 50% (128) is both equal.
-	// 0001 0000 is 0x10, duty cycle 16 of 256 which is 6.25% duty cycle
+	// 5-0 sound length
+	// 7-6	Wave pattern duty cycle 0-3, duty cycle is how long a square wave is "on" vs "of" so 50% (2) is both equal.
+	// 0001 0000 is 0x10, duty cycle 0, wave length 10
 	NR11_REG = 0x10;
 
 	// chanel 1 register 2: Volume Envelope (Makes the volume get louder or quieter each "tick")
@@ -168,6 +176,13 @@ void playjump(){
 	// 2-0	3 Most Significant bits of frequency
 	// 1000 0011 is 0x83, initialize, set consecutive,  
 	NR14_REG = 0x83;	
+}
+
+void playstep(){
+	NR41_REG = 0x01;
+	NR42_REG = 0x11;
+	NR43_REG = 0x00;
+	NR44_REG = 0xC0;
 }
 
 void init() {
@@ -198,6 +213,7 @@ void init() {
 
 	drawdino(1);
 	drawcacti(90,81,7);
+	enablesound();
 
 }
 
