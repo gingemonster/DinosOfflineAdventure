@@ -11,22 +11,16 @@ void init();
 void checkInput();
 void checkjumping();
 void updateSwitches();
-void drawdino(BYTE jumping);
+void drawdino(UBYTE jumping);
 void drawbg();
 
 UINT8 frame,i,j,playery,backgroundtileoffset,backgroundscene,jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
 INT8 jumpindex,speed = 8;
-BYTE hasmovedy,apressed,running;
+UBYTE hasmovedy,apressed,running;
 
-unsigned char test[] =
+unsigned char blankmap[] =
 {
-  0x00,0x00
-};
-
-unsigned char EmptyBackgroundData[] = 
-{  
-  0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-  0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
+  0x00
 };
 
 void main() {
@@ -34,29 +28,30 @@ void main() {
 	init();
 	
 	while(1) {
-		checkjumping();
 		checkInput();
 		updateSwitches();			// Make sure the SHOW_SPRITES and SHOW_BKG switches are on each loop
 		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory		
 		if(running) {
+			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			drawbg();			
-			delay(60);
+			delay(80);
 		}
 	}
 	
 }
 
 void cls(){
-	move_bkg(0,3);
-	for (j=0 ; j != 18 ; j++){
-		for (i=0 ; i != 20 ; i++){		
-			set_bkg_tiles(i,j,1,1,0x0B);
+	// write a clear sprite to every screen block
+	for (j=0 ; j != 32 ; j++){
+		for (i=0 ; i != 32 ; i++){		
+			set_bkg_tiles(i,j,1,1,blankmap);
 		}
-	}	
+	}
+	move_bkg(0,3);
 }
 
-void drawdino(BYTE jumping){
+void drawdino(UBYTE jumping){
 
 	frame = !frame;
 	move_sprite(0,64,playery);
@@ -107,10 +102,7 @@ void init() {
 	DISPLAY_ON;						// Turn on the display
 
 	set_bkg_data(0, 11, BackgroundData);
-	
-
 	set_sprite_data(0, 9, SpritesData);   /* defines the sprite data */
-	
 	
 	set_sprite_tile(0,0);            /* defines the tiles numbers */
 	set_sprite_tile(1,1); 
@@ -118,11 +110,10 @@ void init() {
 	set_sprite_tile(3,3); 
 	set_sprite_tile(4,4); 
 	set_sprite_tile(5,5); 
-	set_sprite_tile(6,6);	
-
+	set_sprite_tile(6,6);
 		
-
 	cls(); // clear background
+
 	set_bkg_tiles(0,10,32,2,map); // draw first background
 
 	drawdino(1);
@@ -160,7 +151,7 @@ void checkInput() {
 	if(joypad() == J_START){
 		running = 1;
 	}
-	if((joypad() & J_A) && apressed == 0) // only want to jump once per keypress
+	if((joypad() & J_A) && apressed == 0 && running) // only want to jump once per keypress
 	{
 		apressed = 1;
 		// dont jump if already jumping
