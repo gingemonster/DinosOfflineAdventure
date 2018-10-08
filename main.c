@@ -46,8 +46,7 @@ void main() {
 		if(running) {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			scrollbgandenemies();			
-			delay(10);
+			scrollbgandenemies();
 		}
 	}
 	
