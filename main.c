@@ -21,13 +21,15 @@ void playstep();
 void drawcacti(UINT8,UINT8,UINT8);
 void enablesound();
 void setupinitialsprites(); 
-void setupinitialbackground(); 
+void setupinitialbackground();
+UINT8 getScreenQuadrant(UINT8 screenoffset);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
-const UINT8 speed = 8;
-
-UINT8 frame,i,j,playery,backgroundtileoffset;
+const UINT8 speed = 2;
+const UINT8 skipframesforspriteanim = 10;
+UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
+UINT8 frame,i,j,playery;
 INT8 jumpindex;
 UBYTE hasmovedy,apressed,running;
 UINT8 enemysprites[];
@@ -44,7 +46,7 @@ void main() {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandenemies();			
-			delay(90);
+			delay(10);
 		}
 	}
 	
@@ -65,8 +67,6 @@ void cls(){
 // =========================================================
 
 void drawdino(UBYTE jumping){
-
-	frame = !frame;
 	move_sprite(0,34,playery);
 	move_sprite(1,42,playery);
 	move_sprite(2,50,playery);
@@ -74,14 +74,18 @@ void drawdino(UBYTE jumping){
 	move_sprite(3,34,playery + 8);
 	move_sprite(4,42,playery + 8);
 
-	if(frame || jumping){
-		set_sprite_tile(5,5); 
-		set_sprite_tile(6,6);
-	}
-	else{
-		set_sprite_tile(5,7); 
-		set_sprite_tile(6,8);
-		playstep();
+	// dont want to play anim every frame so skip some
+	if(screenpixeloffset % skipframesforspriteanim == 0){
+		frame = !frame;
+		if(frame || jumping){
+			set_sprite_tile(5,5); 
+			set_sprite_tile(6,6);
+		}
+		else{
+				set_sprite_tile(5,7); 
+				set_sprite_tile(6,8);
+				playstep();
+		}
 	}
 	move_sprite(5,34,playery + 16);
 	move_sprite(6,42,playery + 16);	
@@ -99,14 +103,32 @@ void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
 void scrollbgandenemies(){
 	// for each move of 8 (a tile) load in the next tile from the next scene
 	scroll_bkg(speed,0);
-	
-	set_bkg_tiles(backgroundtileoffset % 32,10,1,1,&map[backgroundtileoffset]); // draw 1 tile from first line of map
-	set_bkg_tiles(backgroundtileoffset % 32,11,1,1,&map[backgroundtileoffset + 64]); // draw 1 tile from second line of map, offsetting map aray to the second line
-	
-	backgroundtileoffset++;
-	if(backgroundtileoffset==64){
-		// we have reached end of 2nd scene first row so reset offset to 0, first scene first row
-		backgroundtileoffset = 0;
+	screenpixeloffset += speed;
+
+	// get the quadrant of vram the left edge of the screen (screenpixeloffset) is currently in
+	currentscreenquadrant = getScreenQuadrant(screenpixeloffset);
+
+	if(lastscreenquadrantrendered!=currentscreenquadrant){
+		// have just scrolled into new quadrant of screen so time to render previous quadrant
+		set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[(nextscene * 32) + (lastscreenquadrantrendered * 8)]); // first row
+		set_bkg_tiles(lastscreenquadrantrendered*8,11,8,1,&map[64 + (nextscene * 32) + (lastscreenquadrantrendered * 8)]); // second row
+
+		//set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[32]);
+		//1 * 32 = 32 + 0 * 8 = 32;
+
+		lastscreenquadrantrendered = currentscreenquadrant;
+	}
+
+
+	if(screenpixeloffset>=256){
+		// we have reached end of screen so reset
+		screenpixeloffset = 0;
+		if(nextscene==1){
+			nextscene = 0;
+		}
+		else{
+			nextscene = 1;
+		}
 	}
 
 	// scroll enemies
@@ -114,6 +136,19 @@ void scrollbgandenemies(){
 		scroll_sprite(enemysprites[i],-speed/2,0);
 		scroll_sprite(enemysprites[i],-speed/2,0);
 	}
+}
+
+UINT8 getScreenQuadrant(UINT8 screenoffset){
+	if(screenoffset < 64){
+		return 0;
+	}
+	if(screenoffset < 128){
+		return 1;
+	}
+	if(screenoffset < 192){
+		return 2;
+	}
+	return 3;	
 }
 
 // =========================================================
@@ -204,6 +239,7 @@ void playstep(){
 void init() {
 	playery = 80;
 	jumpindex = -1;
+	screenpixeloffset = 0;
 
 	setupinitialbackground(); // create initial background
 	setupinitialsprites(); // create initial sprites
@@ -235,7 +271,9 @@ void setupinitialbackground(){
 	set_bkg_tiles(0,10,32,1,map); // draw first background row
 	set_bkg_tiles(0,11,32,1,&map[96]); // draw secind background row	
 
-	backgroundtileoffset = 32; // set next background to be draw offset at start of next scene
+	nextscene = 1; // set next backgroundscene to draw
+	screenpixeloffset = 0; // set initial screen scroll offset
+	lastscreenquadrantrendered = 0; // set the last screen quadrant rendered
 }
 
 void updateSwitches() {
