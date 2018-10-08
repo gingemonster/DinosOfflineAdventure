@@ -22,6 +22,7 @@ void drawcacti(UINT8,UINT8,UINT8);
 void enablesound();
 void setupinitialsprites(); 
 void setupinitialbackground();
+UBYTE shouldrenderanimationframe();
 UINT8 getScreenQuadrant(UINT8 screenoffset);
 
 const unsigned char blankmap[]={0x00};
@@ -67,15 +68,9 @@ void cls(){
 // =========================================================
 
 void drawdino(UBYTE jumping){
-	move_sprite(0,34,playery);
-	move_sprite(1,42,playery);
-	move_sprite(2,50,playery);
-
-	move_sprite(3,34,playery + 8);
-	move_sprite(4,42,playery + 8);
-
+	// animate legs and play step sound
 	// dont want to play anim every frame so skip some
-	if(screenpixeloffset % skipframesforspriteanim == 0){
+	if(shouldrenderanimationframe()){
 		frame = !frame;
 		if(frame || jumping){
 			set_sprite_tile(5,5); 
@@ -87,6 +82,13 @@ void drawdino(UBYTE jumping){
 				playstep();
 		}
 	}
+
+	// move all sprites in dino metasprite
+	move_sprite(0,34,playery);
+	move_sprite(1,42,playery);
+	move_sprite(2,50,playery);
+	move_sprite(3,34,playery + 8);
+	move_sprite(4,42,playery + 8);
 	move_sprite(5,34,playery + 16);
 	move_sprite(6,42,playery + 16);	
 }
@@ -101,24 +103,23 @@ void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
 }
 
 void scrollbgandenemies(){
-	// for each move of 8 (a tile) load in the next tile from the next scene
+	// scroll bg by speed
 	scroll_bkg(speed,0);
+	// update the current count of how far we have scrolled the screen
 	screenpixeloffset += speed;
 
-	// get the quadrant of vram the left edge of the screen (screenpixeloffset) is currently in
+	// get the quadrant of vram the left edge of the screen "screenpixeloffset")" is currently in
 	currentscreenquadrant = getScreenQuadrant(screenpixeloffset);
 
 	if(lastscreenquadrantrendered!=currentscreenquadrant){
 		// have just scrolled into new quadrant of screen so time to render previous quadrant
+		// now its no longer visible on screen
 		set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[(nextscene * 32) + (lastscreenquadrantrendered * 8)]); // first row
 		set_bkg_tiles(lastscreenquadrantrendered*8,11,8,1,&map[64 + (nextscene * 32) + (lastscreenquadrantrendered * 8)]); // second row
 
-		//set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[32]);
-		//1 * 32 = 32 + 0 * 8 = 32;
-
+		// set the last rendereed quadrant
 		lastscreenquadrantrendered = currentscreenquadrant;
 	}
-
 
 	if(screenpixeloffset>=256){
 		// we have reached end of screen so reset
@@ -284,26 +285,34 @@ void updateSwitches() {
 }
 
 // =========================================================
+// Animation utils
+// =========================================================
+UBYTE shouldrenderanimationframe(){
+	return screenpixeloffset % skipframesforspriteanim == 0;
+}
+
+// =========================================================
 // Event handlers
 // =========================================================
 
 void checkjumping(){
-	if(jumpindex > -1){
+	if(shouldrenderanimationframe()){ // TODO MOVE TO SHARED FUNCTION
+		if(jumpindex > -1){
+			playery= playery + jump_array[jumpindex];
+			hasmovedy = 1;
 
-		playery= playery + jump_array[jumpindex];
-		hasmovedy = 1;
-
-		if(jumpindex == sizeof(jump_array) - 1){
-			// at end of jump index so end
-			jumpindex = -1;
+			if(jumpindex == sizeof(jump_array) - 1){
+				// at end of jump index so end
+				jumpindex = -1;
+			}
+			else{
+				// move to next jump ammount
+				jumpindex ++;
+			}
 		}
 		else{
-			// move to next jump ammount
-			jumpindex ++;
+			hasmovedy = 0;
 		}
-	}
-	else{
-		hasmovedy = 0;
 	}
 }
 
