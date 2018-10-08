@@ -27,7 +27,7 @@ UINT8 getScreenQuadrant(UINT8 screenoffset);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
-const UINT8 speed = 2;
+const INT8 speed = 2;
 const UINT8 skipframesforspriteanim = 10;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
 UINT8 frame,i,j,playery;
@@ -133,8 +133,8 @@ void scrollbgandenemies(){
 
 	// scroll enemies
 	for(i=0;i!=2;i++){
-		scroll_sprite(enemysprites[i],-speed/2,0);
-		scroll_sprite(enemysprites[i],-speed/2,0);
+		scroll_sprite(enemysprites[i],-speed/2,0); // cannot fathom why but sprites scroll twice the speed of the background
+		scroll_sprite(enemysprites[i],-speed/2,0); 
 	}
 }
 
