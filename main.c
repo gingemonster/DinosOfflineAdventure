@@ -28,7 +28,7 @@ UINT8 getScreenQuadrant(UINT8 screenoffset);
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
 const INT8 speed = 2;
-const UINT8 skipframesforspriteanim = 10;
+const UINT8 skipframesforspriteanim = 16;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
 UINT8 frame,i,j,playery;
 INT8 jumpindex;
@@ -83,13 +83,13 @@ void drawdino(UBYTE jumping){
 	}
 
 	// move all sprites in dino metasprite
-	move_sprite(0,34,playery);
-	move_sprite(1,42,playery);
-	move_sprite(2,50,playery);
-	move_sprite(3,34,playery + 8);
-	move_sprite(4,42,playery + 8);
-	move_sprite(5,34,playery + 16);
-	move_sprite(6,42,playery + 16);	
+	move_sprite(0,14,playery);
+	move_sprite(1,22,playery);
+	move_sprite(2,30,playery);
+	move_sprite(3,14,playery + 8);
+	move_sprite(4,22,playery + 8);
+	move_sprite(5,14,playery + 16);
+	move_sprite(6,22,playery + 16);	
 }
 
 void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
