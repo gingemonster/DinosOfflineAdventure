@@ -26,12 +26,12 @@ UBYTE shouldrenderanimationframe();
 UINT8 getScreenQuadrant(UINT8 screenoffset);
 
 const unsigned char blankmap[]={0x00};
-const UINT8 jump_array[] = {-26,-12,-6,-3,-1,1,3,6, 12, 26};
+const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
 const INT8 speed = 2;
-const UINT8 skipframesforspriteanim = 16;
+UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
-UINT8 frame,i,j,playery;
-INT8 jumpindex;
+UINT8 frame,playery;
+INT8 i,j,jumpindex;
 UBYTE hasmovedy,apressed,running;
 UINT8 enemysprites[];
 
@@ -133,8 +133,7 @@ void scrollbgandenemies(){
 
 	// scroll enemies
 	for(i=0;i!=2;i++){
-		scroll_sprite(enemysprites[i],-speed/2,0); // cannot fathom why but sprites scroll twice the speed of the background
-		scroll_sprite(enemysprites[i],-speed/2,0); 
+		scroll_sprite(enemysprites[i],-speed,0);
 	}
 }
 
@@ -237,6 +236,7 @@ void playstep(){
 // =========================================================
 
 void init() {
+	skipframesforspriteanim = speed * 6;
 	playery = 80;
 	jumpindex = -1;
 	screenpixeloffset = 0;
