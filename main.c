@@ -1,5 +1,6 @@
 #include <gb/gb.h>
 #include <stdio.h>
+#include <string.h>
 #include "sprites.h"
 #include "sprites.c"
 #include "background.h"
@@ -10,6 +11,15 @@
 // =========================================================
 // Global variables, constants etc
 // =========================================================
+//generical character structure: id, position, graphics
+struct PG {
+	UBYTE spritemapids[7]; // dino needs 7, just wont fill 5 of them for enemies
+	UBYTE startspriteid; // the first sprite id in the collection
+	UBYTE x;
+	UBYTE y;
+	UBYTE graphic;
+};
+
 void init();
 void checkInput();
 void checkjumping();
@@ -24,16 +34,22 @@ void setupinitialsprites();
 void setupinitialbackground();
 UBYTE shouldrenderanimationframe();
 UINT8 getScreenQuadrant(UINT8 screenoffset);
+UINT8 setupsprites(struct PG* character);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
 const INT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
-UINT8 frame,playery;
+UINT8 frame,playery,lastspriteid;
 INT8 i,j,jumpindex;
 UBYTE hasmovedy,apressed,running;
 UINT8 enemysprites[];
+
+
+
+struct PG obstacles[8]; // they will all be on same line and gameboy can only do 10 sprites on a line, dino takes 2
+struct PG dino;
 
 void main() {
 
@@ -244,24 +260,58 @@ void init() {
 	setupinitialbackground(); // create initial background
 	setupinitialsprites(); // create initial sprites
 
-	
-
 	drawdino(1);
 	drawcacti(90,81,7);
 	enablesound();
 }
 
 void setupinitialsprites(){
+	UBYTE tempdinoarray[] = {0,1,2,3,4,5,6};
+
 	set_sprite_data(0, 12, SpritesData);   /* defines the sprite data */
 	
 	// dino
-	set_sprite_tile(0,0);            /* defines the tiles numbers */
-	set_sprite_tile(1,1); 
-	set_sprite_tile(2,2); 
-	set_sprite_tile(3,3); 
-	set_sprite_tile(4,4); 
-	set_sprite_tile(5,5); 
-	set_sprite_tile(6,6);
+	// TODO store dinos sprite mappings in a struct property
+	// and have standard load sprites method
+	// then have the load method return the sprite ids replacing tempdinoarray
+	// set_sprite_tile(0,0);            /* defines the tiles numbers */
+	// set_sprite_tile(1,1); 
+	// set_sprite_tile(2,2); 
+	// set_sprite_tile(3,3); 
+	// set_sprite_tile(4,4); 
+	// set_sprite_tile(5,5); 
+	// set_sprite_tile(6,6);
+
+	// copy array of dinos sprite ids into dino.ids using memcpy
+	memcpy(dino.spritemapids,tempdinoarray, sizeof(tempdinoarray)); 
+
+	dino.x = 14;
+	dino.y = 80;
+	dino.startspriteid =  setupsprites(dino.spritemapids);
+	
+
+}
+
+UINT8 setupsprites(struct PG* character){
+	//loop map ids and load sprites where there is an id
+	UINT8 firstspriteid;
+	if(lastspriteid==NULL){
+		firstspriteid = 0;
+		lastspriteid = 0;
+	}
+	else{
+		firstspriteid = lastspriteid;
+	}	
+	for(i=0;i!=sizeof(character->spritemapids);i++){
+
+		if(character->spritemapids[i]!=NULL){
+			set_sprite_tile(lastspriteid,character->spritemapids[i]);
+		}
+		lastspriteid++;
+	}
+
+	// return index of first sprite for this object
+	return lastspriteid;
 }
 
 void setupinitialbackground(){
