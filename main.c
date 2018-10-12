@@ -33,11 +33,12 @@ void enablesound();
 void setupinitialsprites(); 
 void setupinitialbackground();
 UBYTE shouldrenderanimationframe();
-UINT8 getScreenQuadrant(UINT8 screenoffset);
-UINT8 setupsprites(struct PG* character);
+UINT8 getscreenquadrant(UINT8 screenoffset);
+UINT8 setupcharactersprites(struct PG* character);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
+const UBYTE dinospritemap[] = {0,1,2,3,4,5,6};
 const INT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
@@ -99,6 +100,10 @@ void drawdino(UBYTE jumping){
 	}
 
 	// move all sprites in dino metasprite
+	// TODO how can I have a standard function for moving them
+	// if there is no way to know their layout
+	// could draw everything l->r row by row assuming there are 8
+	// if one index of array not set skip it?
 	move_sprite(0,14,playery);
 	move_sprite(1,22,playery);
 	move_sprite(2,30,playery);
@@ -124,7 +129,7 @@ void scrollbgandenemies(){
 	screenpixeloffset += speed;
 
 	// get the quadrant of vram the left edge of the screen "screenpixeloffset")" is currently in
-	currentscreenquadrant = getScreenQuadrant(screenpixeloffset);
+	currentscreenquadrant = getscreenquadrant(screenpixeloffset);
 
 	if(lastscreenquadrantrendered!=currentscreenquadrant){
 		// have just scrolled into new quadrant of screen so time to render previous quadrant
@@ -153,7 +158,7 @@ void scrollbgandenemies(){
 	}
 }
 
-UINT8 getScreenQuadrant(UINT8 screenoffset){
+UINT8 getscreenquadrant(UINT8 screenoffset){
 	if(screenoffset < 64){
 		return 0;
 	}
@@ -266,33 +271,21 @@ void init() {
 }
 
 void setupinitialsprites(){
-	UBYTE tempdinoarray[] = {0,1,2,3,4,5,6};
-
 	set_sprite_data(0, 12, SpritesData);   /* defines the sprite data */
-	
-	// dino
-	// TODO store dinos sprite mappings in a struct property
-	// and have standard load sprites method
-	// then have the load method return the sprite ids replacing tempdinoarray
-	// set_sprite_tile(0,0);            /* defines the tiles numbers */
-	// set_sprite_tile(1,1); 
-	// set_sprite_tile(2,2); 
-	// set_sprite_tile(3,3); 
-	// set_sprite_tile(4,4); 
-	// set_sprite_tile(5,5); 
-	// set_sprite_tile(6,6);
 
+	// create dino character
 	// copy array of dinos sprite ids into dino.ids using memcpy
-	memcpy(dino.spritemapids,tempdinoarray, sizeof(tempdinoarray)); 
-
+	memcpy(dino.spritemapids,dinospritemap, sizeof(dinospritemap)); 
 	dino.x = 14;
 	dino.y = 80;
-	dino.startspriteid =  setupsprites(dino.spritemapids);
+	dino.startspriteid =  setupcharactersprites(dino.spritemapids);
+
+	// TODO create first random set of obstacles
 	
 
 }
 
-UINT8 setupsprites(struct PG* character){
+UINT8 setupcharactersprites(struct PG* character){
 	//loop map ids and load sprites where there is an id
 	UINT8 firstspriteid;
 	if(lastspriteid==NULL){
