@@ -13,7 +13,7 @@
 // =========================================================
 //generical character structure: id, position, graphics
 struct PG {
-	UBYTE spritemapids[7]; // dino needs 7, just wont fill 5 of them for enemies
+	UBYTE spritemapids[9]; // dino needs 7, and cacti 2, but to create a generic drawing and moving function everything will assume an 3x3 grid and just not full some
 	UBYTE startspriteid; // the first sprite id in the collection
 	UBYTE x;
 	UBYTE y;
@@ -35,18 +35,18 @@ void setupinitialbackground();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 UINT8 setupcharactersprites(struct PG* character);
+void movecharactersprites(struct PG* character);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
-const UBYTE dinospritemap[] = {0,1,2,3,4,5,6};
+const UBYTE dinospritemap[] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const INT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
-UINT8 frame,playery,lastspriteid;
-INT8 i,j,jumpindex;
+UINT8 frame,lastspriteid;
+INT8 h,i,j,jumpindex;
 UBYTE hasmovedy,apressed,running;
 UINT8 enemysprites[];
-
 
 
 struct PG obstacles[8]; // they will all be on same line and gameboy can only do 10 sprites on a line, dino takes 2
@@ -99,18 +99,22 @@ void drawdino(UBYTE jumping){
 		}
 	}
 
-	// move all sprites in dino metasprite
-	// TODO how can I have a standard function for moving them
-	// if there is no way to know their layout
-	// could draw everything l->r row by row assuming there are 8
-	// if one index of array not set skip it?
-	move_sprite(0,14,playery);
-	move_sprite(1,22,playery);
-	move_sprite(2,30,playery);
-	move_sprite(3,14,playery + 8);
-	move_sprite(4,22,playery + 8);
-	move_sprite(5,14,playery + 16);
-	move_sprite(6,22,playery + 16);	
+	movecharactersprites(&dino);
+
+}
+
+void movecharactersprites(struct PG* character){
+	h = 0; // h needed to keep track of sprite maps that are not empty
+	for(i=0;i!=3;i++){
+		for(j=0;j!=3;j++){
+			// increment characters sprite map through all 9 sprite maps, checking if any should be ignored
+			if(character->spritemapids[(i * 3 + j)] != 255){
+				// 
+				move_sprite(character->startspriteid + h,character->x + (j*8),character->y + (i*8));
+				h++;
+			}
+		}
+	}
 }
 
 void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
@@ -258,7 +262,6 @@ void playstep(){
 
 void init() {
 	skipframesforspriteanim = speed * 6;
-	playery = 80;
 	jumpindex = -1;
 	screenpixeloffset = 0;
 
@@ -278,7 +281,7 @@ void setupinitialsprites(){
 	memcpy(dino.spritemapids,dinospritemap, sizeof(dinospritemap)); 
 	dino.x = 14;
 	dino.y = 80;
-	dino.startspriteid =  setupcharactersprites(dino.spritemapids);
+	dino.startspriteid =  setupcharactersprites(&dino); // & is saying pass a pointer to the function
 
 	// TODO create first random set of obstacles
 	
@@ -287,7 +290,8 @@ void setupinitialsprites(){
 
 UINT8 setupcharactersprites(struct PG* character){
 	//loop map ids and load sprites where there is an id
-	UINT8 firstspriteid;
+	// -> are saying get a property from a pointer
+	UBYTE firstspriteid;
 	if(lastspriteid==NULL){
 		firstspriteid = 0;
 		lastspriteid = 0;
@@ -296,15 +300,14 @@ UINT8 setupcharactersprites(struct PG* character){
 		firstspriteid = lastspriteid;
 	}	
 	for(i=0;i!=sizeof(character->spritemapids);i++){
-
-		if(character->spritemapids[i]!=NULL){
+		if(character->spritemapids[i]!=255){
 			set_sprite_tile(lastspriteid,character->spritemapids[i]);
 		}
 		lastspriteid++;
 	}
 
 	// return index of first sprite for this object
-	return lastspriteid;
+	return firstspriteid;
 }
 
 void setupinitialbackground(){
@@ -340,7 +343,7 @@ UBYTE shouldrenderanimationframe(){
 void checkjumping(){
 	if(shouldrenderanimationframe()){ // TODO MOVE TO SHARED FUNCTION
 		if(jumpindex > -1){
-			playery= playery + jump_array[jumpindex];
+			dino.y= dino.y + jump_array[jumpindex];
 			hasmovedy = 1;
 
 			if(jumpindex == sizeof(jump_array) - 1){
