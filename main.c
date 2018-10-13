@@ -27,7 +27,7 @@ void checkInput();
 void checkjumping();
 void updateSwitches();
 void drawdino(UBYTE);
-void scrollbgandenemies();
+void scrollbgandobstacles();
 void playjump();
 void playstep();
 void drawcacti(UINT8,UINT8,UINT8);
@@ -51,7 +51,6 @@ UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloff
 UINT8 frame,lastspriteid;
 INT8 h,i,j,k,jumpindex;
 UBYTE hasmovedy,apressed,running;
-UINT8 enemysprites[];
 
 struct PG obstacles[8]; // they will all be on same line and gameboy can only do 10 sprites on a line, dino takes 2
 struct PG dino;
@@ -67,7 +66,7 @@ void main() {
 		if(running) {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			scrollbgandenemies();
+			scrollbgandobstacles();
 		}
 	}
 	
@@ -133,7 +132,7 @@ void movecharactersprites(struct PG* character){
 	}
 }
 
-void scrollbgandenemies(){
+void scrollbgandobstacles(){
 	// scroll bg by speed
 	scroll_bkg(speed,0);
 
@@ -164,11 +163,17 @@ void scrollbgandenemies(){
 		}
 	}
 
-	// scroll enemies
-	for(i=0;i!=2;i++){
-		scroll_sprite(enemysprites[i],-speed,0);
+	// scroll obstacles
+	for(k=0;k!=8;k++){
+		if(obstacles[k].initialized==1){
+			scroll_sprite(obstacles[k].startspriteid,-speed,0);
+			scroll_sprite(obstacles[k].startspriteid+1,-speed,0);
+			
+			obstacles[k].x = obstacles[k].x - speed;
+		}
 	}
 }
+
 
 UINT8 getscreenquadrant(UINT8 screenoffset){
 	if(screenoffset < 64){
@@ -220,7 +225,7 @@ void setupinitialsprites(){
 	// generate initial obstacles for all 4 quadrants of VRAM
 	// generatequadrantobstacles(0);
 	generatequadrantobstacles(1);
-	generatequadrantobstacles(2);
+	//generatequadrantobstacles(2);
 	generatequadrantobstacles(3);
 }
 
