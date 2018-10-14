@@ -16,8 +16,10 @@
 struct PG {
 	UBYTE spritemapids[9]; // dino needs 7, and cacti 2, but to create a generic drawing and moving function everything will assume an 3x3 grid and just not full some
 	UBYTE startspriteid; // the first sprite id in the collection
-	UBYTE x;
-	UBYTE y;
+	UINT8 x;
+	UINT8 y;
+	UINT8 width;
+	UINT8 height;
 	UBYTE graphic;
 	UBYTE initialized;
 };
@@ -38,38 +40,92 @@ UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
 void movecharactersprites(struct PG* character);
-void generatequadrantobstacles(INT8 quadrant);
+void generatenextobstacles();
+UBYTE checkanycollisions();
+UBYTE checkcollides(struct PG* one,struct PG* two, UINT8 minx);
 
 const unsigned char blankmap[]={0x00};
 const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
 const UBYTE dinospritemap[] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const INT8 speed = 2;
+const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
 UINT8 frame,lastspriteid;
 INT8 h,i,j,k,jumpindex;
 UBYTE hasmovedy,apressed,running;
 
-struct PG obstacles[8]; // they will all be on same line and gameboy can only do 10 sprites on a line, dino takes 2
+
+struct PG obstacles[4]; // 4 in vram at once
 struct PG dino;
 
 void main() {
-
 	init();
 	
 	while(1) {
 		checkInput();
 		updateSwitches();			// Make sure the SHOW_SPRITES and SHOW_BKG switches are on each loop
-		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory		
+		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory
+
 		if(running) {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
+			if(checkanycollisions()==1){
+				//printf("1 ");
+				set_sprite_prop(0, S_FLIPY);
+				set_sprite_prop(1, S_FLIPY);
+				set_sprite_prop(2, S_FLIPY);
+				set_sprite_prop(3, S_FLIPY);
+				set_sprite_prop(4, S_FLIPY);
+				set_sprite_prop(5, S_FLIPY);
+				set_sprite_prop(6, S_FLIPY);
+			}
+			else{
+				set_sprite_prop(0, 1);
+				set_sprite_prop(1, 1);
+				set_sprite_prop(2, 1);
+				set_sprite_prop(3, 1);
+				set_sprite_prop(4, 1);
+				set_sprite_prop(5, 1);
+				set_sprite_prop(6, 1);				
+			}
+			//printf("%u ", (UINT16)obstacles[7].x);
 		}
 	}
 	
+}
+
+UBYTE checkanycollisions(){
+	// for each obstacle on screen check if dino collides
+	
+	for(k=0;k!=4;k++){
+		if(obstacles[k].initialized==1){
+		
+			// printf("%u",(INT16)k);
+			if(checkcollides(&dino,&obstacles[k],54) == 1){
+				return 1;
+			}
+
+		}
+	}
+	return 0;
+}
+
+UBYTE checkcollides(struct PG* one, struct PG* two, UINT8 minx){
+	// using width and height of each look at x position 
+	// and see if two rectangles overlap range at all
+	// dino is always in quadrant 0 so not point checking objects
+	// that are outside it so x < minx
+	if(one->x > minx | two->x > minx){
+		return 0;
+	}
+	return 
+		((one->x >= two->x && one->x <= two->x + two->width) ||
+		(two->x >= one->x && two->x <= one->x + one->width)) &&
+		((one->y <= two->y && one->y >= two->y - two->height) ||
+		(two->y <= one->y && two->y >= one->y - one->height));
 }
 
 void cls(){
@@ -89,6 +145,7 @@ void cls(){
 void drawdino(UBYTE jumping){
 	// animate legs and play step sound
 	// dont want to play anim every frame so skip some
+	
 	if(shouldrenderanimationframe()){
 		frame = !frame;
 		if(frame || jumping){
@@ -101,18 +158,9 @@ void drawdino(UBYTE jumping){
 			playstep();
 		}
 	}
-
+	
 	movecharactersprites(&dino);
-
 }
-// void drawcacti(UINT8 x, UINT8 y, UINT8 spritenum){
-// 	set_sprite_tile(spritenum,9); 
-// 	set_sprite_tile(spritenum+1,10);
-// 	move_sprite(spritenum,x,y);
-// 	move_sprite(spritenum+1,x,y+8);
-// 	enemysprites[0] = spritenum;
-// 	enemysprites[1] = spritenum + 1;
-// }
 
 void movecharactersprites(struct PG* character){
 	h = 0; // h needed to keep track of sprite maps that are not empty
@@ -143,10 +191,15 @@ void scrollbgandobstacles(){
 	currentscreenquadrant = getscreenquadrant(screenpixeloffset);
 
 	if(lastscreenquadrantrendered!=currentscreenquadrant){
+		//printf("l %u c %u\n", (UINT16)lastscreenquadrantrendered, (UINT16)currentscreenquadrant);
 		// have just scrolled into new quadrant of screen so time to render previous quadrant
 		// now its no longer visible on screen
 		set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[(nextscene * 32) + (lastscreenquadrantrendered * 8)]); // first row
 		set_bkg_tiles(lastscreenquadrantrendered*8,11,8,1,&map[64 + (nextscene * 32) + (lastscreenquadrantrendered * 8)]); // second row
+
+		if(lastscreenquadrantrendered==0||lastscreenquadrantrendered==2){
+			generatenextobstacles();
+		}
 
 		// set the last rendereed quadrant
 		lastscreenquadrantrendered = currentscreenquadrant;
@@ -164,14 +217,27 @@ void scrollbgandobstacles(){
 	}
 
 	// scroll obstacles
-	for(k=0;k!=8;k++){
+	for(k=0;k!=4;k++){
 		if(obstacles[k].initialized==1){
+			//printf("%u %u", (UINT16)obstacles[k].startspriteid, (UINT16)obstacles[k].x);
+			
 			scroll_sprite(obstacles[k].startspriteid,-speed,0);
 			scroll_sprite(obstacles[k].startspriteid+1,-speed,0);
-			
+			// as x is UINT I assume it will wrap round to 256 automatically?
+			// and it will get regenerated soon anyway
+
+			// is just about to go off screen so make inactive instead and move to other end of screen
+			// they are about to get regenerated anyway
+			if(obstacles[k].x < speed){
+				obstacles[k].x = 240;
+				obstacles[k].initialized=0;
+			}
+
 			obstacles[k].x = obstacles[k].x - speed;
 		}
 	}
+	delay(30);
+	
 }
 
 
@@ -201,13 +267,6 @@ void init() {
 	setupinitialsprites(); // create initial sprites
 
 	drawdino(1);
-
-	// move all 8 obstacles to start positions
-	for(k=0;k!=8;k++){
-		movecharactersprites(&obstacles[k]);
-	}
-	
-	//drawcacti(90,81,7);
 	enablesound();
 }
 
@@ -219,44 +278,59 @@ void setupinitialsprites(){
 	memcpy(dino.spritemapids,dinospritemap, sizeof(dinospritemap)); 
 	dino.x = 14;
 	dino.y = 80;
+	dino.width = 20; // technical sprites take up 24px but his nose only comes out to 20
+	dino.height = 24;
 	dino.startspriteid = 0;
+	dino.initialized = 1;
+	lastspriteid = 8; // dino fills 0-8
 	setupcharactersprites(&dino); // & is saying pass a pointer to the function
-
-	// generate initial obstacles for all 4 quadrants of VRAM
-	// generatequadrantobstacles(0);
-	generatequadrantobstacles(1);
-	//generatequadrantobstacles(2);
-	generatequadrantobstacles(3);
 }
 
-void generatequadrantobstacles(INT8 quadrant){
-	// get start possition for this set of obstacles
-	// for offsetting them from the start of the quadrant position
-	// dont want one with 10 of the start or end of quadrant
+void generatenextobstacles(){
+	// will always be created in the last quadrant of vram
+	// then scrolled into view
 	UINT8 xoffsetfromstart; 
 	UINT8 currentindex;
 	INT8 randomnum;
 	initrand(DIV_REG);
-	xoffsetfromstart =  (rand() % 45) + 10 + ((INT16)quadrant * 64);
 
-	// loop to create up to 2 obstacles in this quadrant
-	// use j as i is used by setupcharactersprites
-	for(j=0;j!=2;j++){
+	// get random number between 192 and 240 (256-2*8 so two sprites wide)
+	xoffsetfromstart = 192 + rand() % 49;
+
+	//lastspriteid
+
+	// generate up to two obstacles
+	for(k=0;k!=2;k++){
 		// get random number between 0 and 2
 		// used to decide what obstacle to generate
 		initrand(DIV_REG);
-		randomnum = rand() % 2;
-		currentindex = (INT16)quadrant * 2 + j;
+		randomnum = rand() % 3;
 		
 		// if randomnum is 2 then skip creating an obstacle
 		if(randomnum!=2){
+			// check if we start recycling sprites
+			// there are 4 osbstacles spread across 256 of VRAM
+			// each obstacles needs 2 sprites so last sprite id
+			// is 16 (9-16)
+			if(lastspriteid==16)
+			{
+				// dino takes 0-8
+				lastspriteid=9;
+			}
+			else{
+				lastspriteid++; // each obstacle takes 2 sprites
+			}
+			currentindex = lastspriteid - 9;
 
-			obstacles[currentindex].startspriteid =  9 + (currentindex*2); // dino takes 9, each character takes 2 sprites
+			obstacles[currentindex].initialized = 1;
+			obstacles[currentindex].startspriteid =  lastspriteid;
 			
-			obstacles[currentindex].x = (xoffsetfromstart + (j * 8)); // 2nd obstacle will always be 8 pixels to the right of first
+			obstacles[currentindex].x = (UINT8)(xoffsetfromstart + (k * 8)); // 2nd obstacle will always be 8 pixels to the right of first
 			obstacles[currentindex].y = 81;
+			obstacles[currentindex].width = 8;
+			obstacles[currentindex].height = 16;
 
-			//printf("sid %u x %u obsi %u\n", (UINT16)obstacles[currentindex].startspriteid, (UINT16)obstacles[currentindex].x,(UINT16)currentindex);
+			//printf("i %u sid %u x %u\n", (UINT16)currentindex,(UINT16)lastspriteid,(UINT16)obstacles[currentindex].x);
 
 			if(randomnum==0){
 				//set large cacti sprite map
@@ -267,12 +341,12 @@ void generatequadrantobstacles(INT8 quadrant){
 				memcpy(obstacles[currentindex].spritemapids,smallcactispritemap, sizeof(largecactispritemap));
 			}
 
+			// each obstacle loads 2 sprites so account for second
+			lastspriteid++;
+
 			// load the map images into sprites overwriting any previous ones
-			setupcharactersprites(&obstacles[currentindex],obstacles[currentindex].startspriteid);
-			
-		}
-		else{
-			obstacles[currentindex].initialized = 0; // empty
+			setupcharactersprites(&obstacles[currentindex]);
+			movecharactersprites(&obstacles[currentindex]);
 		}
 	}
 }
@@ -283,14 +357,13 @@ void setupcharactersprites(struct PG* character){
 	UBYTE currentspriteid = character->startspriteid;
 
 	for(i=0;i!=sizeof(character->spritemapids);i++){
-		if(character->spritemapids[i]!=255){
+		if(character->spritemapids[i]!=255){ // check if sprite map is empty (255) or not
 			//printf("i %u sid %u smap %u\n",(UINT16)i,(UINT16)currentspriteid,(UINT16)character->spritemapids[i]);
 			set_sprite_tile(currentspriteid,character->spritemapids[i]);
 			currentspriteid++;
 		}
 		
 	}
-	character->initialized = 1;
 }
 
 void setupinitialbackground(){
