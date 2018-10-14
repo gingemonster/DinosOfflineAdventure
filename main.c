@@ -73,7 +73,6 @@ void main() {
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
 			if(checkanycollisions()==1){
-				//printf("1 ");
 				set_sprite_prop(0, S_FLIPY);
 				set_sprite_prop(1, S_FLIPY);
 				set_sprite_prop(2, S_FLIPY);
@@ -91,7 +90,6 @@ void main() {
 				set_sprite_prop(5, 1);
 				set_sprite_prop(6, 1);				
 			}
-			//printf("%u ", (UINT16)obstacles[7].x);
 		}
 	}
 	
@@ -102,12 +100,9 @@ UBYTE checkanycollisions(){
 	
 	for(k=0;k!=4;k++){
 		if(obstacles[k].initialized==1){
-		
-			// printf("%u",(INT16)k);
 			if(checkcollides(&dino,&obstacles[k],54) == 1){
 				return 1;
 			}
-
 		}
 	}
 	return 0;
@@ -167,7 +162,6 @@ void movecharactersprites(struct PG* character){
 	
 	// dont bother moving a character if its not initialized, probably empty obstacle
 	if(character->initialized==1){
-		//printf("%u %u \n", (UINT16)character->startspriteid, (UINT16)character->x);
 		for(i=0;i!=3;i++){
 			for(j=0;j!=3;j++){
 				// increment characters sprite map through all 3x3 grid of sprite maps, checking if any should be ignored
@@ -191,7 +185,6 @@ void scrollbgandobstacles(){
 	currentscreenquadrant = getscreenquadrant(screenpixeloffset);
 
 	if(lastscreenquadrantrendered!=currentscreenquadrant){
-		//printf("l %u c %u\n", (UINT16)lastscreenquadrantrendered, (UINT16)currentscreenquadrant);
 		// have just scrolled into new quadrant of screen so time to render previous quadrant
 		// now its no longer visible on screen
 		set_bkg_tiles(lastscreenquadrantrendered*8,10,8,1,&map[(nextscene * 32) + (lastscreenquadrantrendered * 8)]); // first row
@@ -219,8 +212,6 @@ void scrollbgandobstacles(){
 	// scroll obstacles
 	for(k=0;k!=4;k++){
 		if(obstacles[k].initialized==1){
-			//printf("%u %u", (UINT16)obstacles[k].startspriteid, (UINT16)obstacles[k].x);
-			
 			scroll_sprite(obstacles[k].startspriteid,-speed,0);
 			scroll_sprite(obstacles[k].startspriteid+1,-speed,0);
 			// as x is UINT I assume it will wrap round to 256 automatically?
@@ -336,8 +327,6 @@ void generatenextobstacles(){
 			obstacles[currentindex].width = 8;
 			obstacles[currentindex].height = 16;
 
-			//printf("i %u sid %u x %u\n", (UINT16)currentindex,(UINT16)lastspriteid,(UINT16)obstacles[currentindex].x);
-
 			if(randomnum==0){
 				//set large cacti sprite map
 				memcpy(obstacles[currentindex].spritemapids,largecactispritemap, sizeof(largecactispritemap));
@@ -364,7 +353,6 @@ void setupcharactersprites(struct PG* character){
 
 	for(i=0;i!=sizeof(character->spritemapids);i++){
 		if(character->spritemapids[i]!=255){ // check if sprite map is empty (255) or not
-			//printf("i %u sid %u smap %u\n",(UINT16)i,(UINT16)currentspriteid,(UINT16)character->spritemapids[i]);
 			set_sprite_tile(currentspriteid,character->spritemapids[i]);
 			currentspriteid++;
 		}
