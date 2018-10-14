@@ -24,7 +24,8 @@ struct PG {
 	UBYTE initialized;
 };
 
-void init();
+void resetgame();
+
 void checkInput();
 void checkjumping();
 void updateSwitches();
@@ -54,14 +55,17 @@ UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
 UINT8 frame,lastspriteid;
 INT8 h,i,j,k,jumpindex,lastobstacleindex;
-UBYTE hasmovedy,apressed,running;
+UBYTE hasmovedy,apressed,running,gameover;
 
 
 struct PG obstacles[4]; // 4 in vram at once
 struct PG dino;
 
 void main() {
-	init();
+	
+	enablesound();
+	resetgame();
+	
 	
 	while(1) {
 		checkInput();
@@ -73,23 +77,8 @@ void main() {
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
 			if(checkanycollisions()==1){
-				set_sprite_prop(0, S_FLIPY);
-				set_sprite_prop(1, S_FLIPY);
-				set_sprite_prop(2, S_FLIPY);
-				set_sprite_prop(3, S_FLIPY);
-				set_sprite_prop(4, S_FLIPY);
-				set_sprite_prop(5, S_FLIPY);
-				set_sprite_prop(6, S_FLIPY);
 				running = 0;
-			}
-			else{
-				set_sprite_prop(0, 1);
-				set_sprite_prop(1, 1);
-				set_sprite_prop(2, 1);
-				set_sprite_prop(3, 1);
-				set_sprite_prop(4, 1);
-				set_sprite_prop(5, 1);
-				set_sprite_prop(6, 1);				
+				gameover = 1;
 			}
 		}
 	}
@@ -249,17 +238,27 @@ UINT8 getscreenquadrant(UINT8 screenoffset){
 // Initialisation functions at very start of game
 // =========================================================
 
-void init() {
+
+void resetgame(){
+	gameover = 0;
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
 	screenpixeloffset = 0;
 	lastobstacleindex = -1;
 
+	//reset and empty obstacles
+	for(k=0;k!=4;k++){
+		obstacles[k].x=240;
+		movecharactersprites(&obstacles[k]);
+		obstacles[k].initialized = 0;
+	}
+
+	// reset sprites
 	setupinitialbackground(); // create initial background
 	setupinitialsprites(); // create initial sprites
 
 	drawdino(1);
-	enablesound();
+
 }
 
 void setupinitialsprites(){
@@ -270,7 +269,7 @@ void setupinitialsprites(){
 	memcpy(dino.spritemapids,dinospritemap, sizeof(dinospritemap)); 
 	dino.x = 14;
 	dino.y = 80;
-	dino.width = 20; // technical sprites take up 24px but his nose only comes out to 20
+	dino.width = 18; // technical sprites take up 24px but looks more like he hits at 18
 	dino.height = 24;
 	dino.startspriteid = 0;
 	dino.initialized = 1;
@@ -429,6 +428,9 @@ void checkInput() {
 	}
 	else if(joypad() & J_A && !running){
 		// not running and they press A so start / reset
+		if(gameover){
+			resetgame();
+		}
 		running = 1;
 		apressed = 1;
 	}
