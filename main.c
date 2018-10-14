@@ -80,6 +80,7 @@ void main() {
 				set_sprite_prop(4, S_FLIPY);
 				set_sprite_prop(5, S_FLIPY);
 				set_sprite_prop(6, S_FLIPY);
+				running = 0;
 			}
 			else{
 				set_sprite_prop(0, 1);
@@ -413,9 +414,6 @@ void checkjumping(){
 }
 
 void checkInput() {
-	if(joypad() == J_START){
-		running = 1;
-	}
 	if((joypad() & J_A) && apressed == 0 && running) // only want to jump once per keypress
 	{
 		apressed = 1;
@@ -425,18 +423,24 @@ void checkInput() {
 			jumpindex = 0;
 		}
 	}
-	else if ((joypad() & J_A) && apressed == 1)
+	else if ((joypad() & J_A) && apressed == 1 && running)
 	{
 		// do nothing user is still pressing A
 	}
-	else
-	{
+	else if(joypad() & J_A && !running){
+		// not running and they press A so start / reset
+		running = 1;
+		apressed = 1;
+	}
+	else{
+		// reset A press they have let go of button
 		apressed = 0;
 	}
 
 	if (hasmovedy){
 		// if only moved Y (jump) we still want to wait for 60
 		hasmovedy = 0;
+		apressed = 1;
 	}
 }
 
