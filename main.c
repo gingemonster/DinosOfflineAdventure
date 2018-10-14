@@ -53,7 +53,7 @@ const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
 UINT8 frame,lastspriteid;
-INT8 h,i,j,k,jumpindex;
+INT8 h,i,j,k,jumpindex,lastobstacleindex;
 UBYTE hasmovedy,apressed,running;
 
 
@@ -229,6 +229,7 @@ void scrollbgandobstacles(){
 			// is just about to go off screen so make inactive instead and move to other end of screen
 			// they are about to get regenerated anyway
 			if(obstacles[k].x < speed){
+
 				obstacles[k].x = 240;
 				obstacles[k].initialized=0;
 			}
@@ -236,8 +237,6 @@ void scrollbgandobstacles(){
 			obstacles[k].x = obstacles[k].x - speed;
 		}
 	}
-	delay(30);
-	
 }
 
 
@@ -262,6 +261,7 @@ void init() {
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
 	screenpixeloffset = 0;
+	lastobstacleindex = -1;
 
 	setupinitialbackground(); // create initial background
 	setupinitialsprites(); // create initial sprites
@@ -290,7 +290,7 @@ void generatenextobstacles(){
 	// will always be created in the last quadrant of vram
 	// then scrolled into view
 	UINT8 xoffsetfromstart; 
-	UINT8 currentindex;
+	INT8 currentindex;
 	INT8 randomnum;
 	initrand(DIV_REG);
 
@@ -308,6 +308,8 @@ void generatenextobstacles(){
 		
 		// if randomnum is 2 then skip creating an obstacle
 		if(randomnum!=2){
+			currentindex = lastobstacleindex + 1;
+			
 			// check if we start recycling sprites
 			// there are 4 osbstacles spread across 256 of VRAM
 			// each obstacles needs 2 sprites so last sprite id
@@ -320,7 +322,11 @@ void generatenextobstacles(){
 			else{
 				lastspriteid++; // each obstacle takes 2 sprites
 			}
-			currentindex = lastspriteid - 9;
+			if(currentindex==4){
+				currentindex = 0;
+			}
+
+			lastobstacleindex = currentindex;
 
 			obstacles[currentindex].initialized = 1;
 			obstacles[currentindex].startspriteid =  lastspriteid;
@@ -398,6 +404,7 @@ UBYTE shouldrenderanimationframe(){
 
 void checkjumping(){
 	if(shouldrenderanimationframe()){ // TODO MOVE TO SHARED FUNCTION
+		
 		if(jumpindex > -1){
 			dino.y= dino.y + jump_array[jumpindex];
 			hasmovedy = 1;
@@ -408,7 +415,7 @@ void checkjumping(){
 			}
 			else{
 				// move to next jump ammount
-				jumpindex ++;
+				jumpindex++;
 			}
 		}
 		else{
