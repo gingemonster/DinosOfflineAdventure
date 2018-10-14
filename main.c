@@ -8,6 +8,8 @@
 #include "background.c"
 #include "map.h"
 #include "map.c"
+#include "font.h"
+#include "font.c"
 
 // =========================================================
 // Global variables, constants etc
@@ -25,7 +27,7 @@ struct PG {
 };
 
 void resetgame();
-
+void drawscore();
 void checkInput();
 void checkjumping();
 void updateSwitches();
@@ -37,6 +39,7 @@ void drawcacti(UINT8,UINT8,UINT8);
 void enablesound();
 void setupinitialsprites(); 
 void setupinitialbackground();
+void setupinitialwindow();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -52,7 +55,7 @@ const UBYTE smallcactispritemap[] = {11,255,255,10,255,255,255,255,255}; // use 
 const UBYTE largecactispritemap[] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
-UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset;
+UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime;
 UINT8 frame,lastspriteid;
 INT8 h,i,j,k,jumpindex,lastobstacleindex;
 UBYTE hasmovedy,apressed,running,gameover;
@@ -73,12 +76,17 @@ void main() {
 		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory
 
 		if(running) {
+			drawscore();
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
 			if(checkanycollisions()==1){
 				running = 0;
 				gameover = 1;
+
+				// TODO show game over
+
+				delay(1000); // otherwise user immediately will reset
 			}
 		}
 	}
@@ -114,7 +122,7 @@ UBYTE checkcollides(struct PG* one, struct PG* two, UINT8 minx){
 }
 
 void cls(){
-	// write a clear sprite to every screen block
+	// write a clear sprite to every background block
 	for (j=0 ; j != 32 ; j++){
 		for (i=0 ; i != 32 ; i++){		
 			set_bkg_tiles(i,j,1,1,blankmap);
@@ -234,8 +242,46 @@ UINT8 getscreenquadrant(UINT8 screenoffset){
 	return 3;	
 }
 
+void drawscore(){
+	UINT8 score[1] = {12};
+	UINT8 digitmap[1];
+	//sys_time Time in VBL periods (60Hz).
+	//set_win_tiles (UINT8 x, UINT8 y, UINT8 w, UINT8 h, unsigned char * tiles)
+	UINT16 time;
+	INT8 numdigitsdrawn = 0;
+
+	// dont want to redraw more than once per second
+	if(sys_time%60 != 0){
+		return;
+	}
+
+	time = (sys_time-laststarttime)/60;
+
+	while (time != 0) {
+		//printf("%u ",(UINT16)time);
+		digitmap[0] = (UINT8)(time % 10 + 12);
+		// draw next lowest digit
+		
+		set_win_tiles(10 - numdigitsdrawn, 0, 1, 1, digitmap);
+		//set_win_tiles(10,0,1,1,score);
+		numdigitsdrawn++;
+		
+		time = time/10; // TODO cant devide by 10 as would get non int
+		
+	}
+	
+	//set_win_tiles(10,0,1,1,score);
+}
+
+void clearscore(){
+	UINT8 clearmap[10] = {11,11,11,11,11,11,11,11,11,11};
+	set_win_tiles(0, 0, 10, 1, clearmap);
+	clearmap[0] = 12;
+	set_win_tiles(10, 0, 1, 1, clearmap);
+}
+
 // =========================================================
-// Initialisation functions at very start of game
+// Initialisation / reset functions at very start of game
 // =========================================================
 
 
@@ -246,6 +292,8 @@ void resetgame(){
 	screenpixeloffset = 0;
 	lastobstacleindex = -1;
 
+	clearscore();
+
 	//reset and empty obstacles
 	for(k=0;k!=4;k++){
 		obstacles[k].x=240;
@@ -254,11 +302,24 @@ void resetgame(){
 	}
 
 	// reset sprites
+	setupinitialwindow();
 	setupinitialbackground(); // create initial background
+	
 	setupinitialsprites(); // create initial sprites
 
 	drawdino(1);
+	
+}
 
+void setupinitialwindow(){
+	// load window tiles
+	UINT8 blank[1] = {13};
+	set_win_data(11,11,Font);
+
+	// write a clear sprite to every window block
+	
+	move_win(75,130);
+	drawscore();
 }
 
 void setupinitialsprites(){
@@ -361,11 +422,11 @@ void setupcharactersprites(struct PG* character){
 }
 
 void setupinitialbackground(){
+	set_bkg_data(0, 11, BackgroundData); // load background data into tileset
 	cls(); // clear background so that all tiles are blank to start with
 
-	set_bkg_data(0, 11, BackgroundData); // load background data into tileset
 	set_bkg_tiles(0,10,32,1,map); // draw first background row
-	set_bkg_tiles(0,11,32,1,&map[96]); // draw secind background row	
+	set_bkg_tiles(0,11,32,1,&map[96]); // draw second background row	
 
 	nextscene = 1; // set next backgroundscene to draw
 	screenpixeloffset = 0; // set initial screen scroll offset
@@ -373,10 +434,11 @@ void setupinitialbackground(){
 }
 
 void updateSwitches() {
-	DISPLAY_ON;	
-	HIDE_WIN;
+	
+	SHOW_WIN;
 	SHOW_SPRITES;
 	SHOW_BKG;
+	DISPLAY_ON;	
 }
 
 // =========================================================
@@ -428,6 +490,7 @@ void checkInput() {
 	}
 	else if(joypad() & J_A && !running){
 		// not running and they press A so start / reset
+		laststarttime = sys_time;
 		if(gameover){
 			resetgame();
 		}
