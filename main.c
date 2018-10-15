@@ -161,9 +161,6 @@ void drawdino(UBYTE jumping){
 				frame=0;
 		}
 	}
-	// only need to move dino if jumping
-	// as moving sprites is cpu intensive
-	if(jumping) movecharactersprites(&dino);
 }
 
 void movecharactersprites(struct PG* character){
@@ -176,6 +173,23 @@ void movecharactersprites(struct PG* character){
 				// increment characters sprite map through all 3x3 grid of sprite maps, checking if any should be ignored
 				if(character->spritemapids[(i * 3 + j)] != 255){
 					move_sprite(character->startspriteid + h,character->x + (j*8),character->y + (i*8));
+					h++;
+				}
+			}
+		}
+	}
+}
+
+void scrollcharactersprites(struct PG* character, INT8 x, INT8 y){
+	h = 0; // h needed to keep track of sprite maps that are not empty
+	
+	// dont bother moving a character if its not initialized, probably empty obstacle
+	if(character->initialized==1){
+		for(i=0;i!=3;i++){
+			for(j=0;j!=3;j++){
+				// increment characters sprite map through all 3x3 grid of sprite maps, checking if any should be ignored
+				if(character->spritemapids[(i * 3 + j)] != 255){
+					scroll_sprite(character->startspriteid + h,x,y);
 					h++;
 				}
 			}
@@ -221,6 +235,8 @@ void scrollbgandobstacles(){
 	// scroll obstacles
 	for(k=0;k!=4;k++){
 		if(obstacles[k].initialized==1){
+			// TODO converto to generic character scroll method
+			//scrollcharactersprites(&obstacles[k],-speed,0)
 			scroll_sprite(obstacles[k].startspriteid,-speed,0);
 			scroll_sprite(obstacles[k].startspriteid+1,-speed,0);
 			// as x is UINT I assume it will wrap round to 256 automatically?
@@ -471,6 +487,7 @@ void checkjumping(){
 		
 		if(jumpindex > -1){
 			dino.y= dino.y + jump_array[jumpindex];
+			scrollcharactersprites(&dino,0,jump_array[jumpindex]);
 			hasmovedy = 1;
 
 			if(jumpindex == sizeof(jump_array) - 1){
