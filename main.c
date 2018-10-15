@@ -286,13 +286,12 @@ void clearscore(){
 
 
 void resetgame(){
+	DISPLAY_OFF; // turn off so we dont see big redraw
 	gameover = 0;
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
 	screenpixeloffset = 0;
 	lastobstacleindex = -1;
-
-	clearscore();
 
 	//reset and empty obstacles
 	for(k=0;k!=4;k++){
@@ -304,11 +303,10 @@ void resetgame(){
 	// reset sprites
 	setupinitialwindow();
 	setupinitialbackground(); // create initial background
-	
 	setupinitialsprites(); // create initial sprites
-
+	clearscore();
 	drawdino(1);
-	
+	DISPLAY_ON;
 }
 
 void setupinitialwindow(){
@@ -317,7 +315,14 @@ void setupinitialwindow(){
 	set_win_data(11,11,Font);
 
 	// write a clear sprite to every window block
-	
+	// write a clear sprite to every background block
+	for (j=0 ; j != 32 ; j++){
+		for (i=0 ; i != 32 ; i++){		
+			set_win_tiles(i,j,1,1,blankmap);
+		}
+	}
+	move_bkg(0,3);
+
 	move_win(75,130);
 	drawscore();
 }
