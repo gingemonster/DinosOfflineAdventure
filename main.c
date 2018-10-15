@@ -2,14 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <rand.h>
+#include <gb/drawing.h>
+#include <gb/font.h>
 #include "sprites.h"
 #include "sprites.c"
 #include "background.h"
 #include "background.c"
 #include "map.h"
 #include "map.c"
-#include "font.h"
-#include "font.c"
+
 
 // =========================================================
 // Global variables, constants etc
@@ -256,7 +257,7 @@ void drawscore(){
 	time = (sys_time-laststarttime)/60;
 
 	while (time != 0) {
-		digitmap[0] = time % 10 + 12;
+		digitmap[0] = time % 10 + 17;
 		// draw next lowest digit
 		set_win_tiles(10 - numdigitsdrawn, 0, 1, 1, digitmap);
 		numdigitsdrawn++;
@@ -265,9 +266,9 @@ void drawscore(){
 }
 
 void clearscore(){
-	UINT8 clearmap[10] = {11,11,11,11,11,11,11,11,11,11};
-	set_win_tiles(0, 0, 10, 1, clearmap);
-	clearmap[0] = 12;
+	UINT8 clearmap[10] = {0,0,0,0,0,0,0,0,0,0};
+	set_win_tiles(0, 0, 1, 1, clearmap);
+	clearmap[0] = 17;
 	set_win_tiles(10, 0, 1, 1, clearmap);
 }
 
@@ -302,8 +303,11 @@ void resetgame(){
 
 void setupinitialwindow(){
 	// load window tiles
-	UINT8 blank[1] = {13};
-	set_win_data(11,11,Font);
+	UINT8 blank[1] = {0};
+	//Load the GBDK default font (the tiles will be located on the BG VRAM between index 1-96 (0x01-0x60)
+	font_init();
+	//color(BLACK, LTGREY, SOLID);
+	font_load(font_ibm);
 
 	// write a clear sprite to every window block
 	// write a clear sprite to every background block
