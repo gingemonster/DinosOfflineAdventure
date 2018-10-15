@@ -35,7 +35,6 @@ void drawdino(UBYTE);
 void scrollbgandobstacles();
 void playjump();
 void playstep();
-void drawcacti(UINT8,UINT8,UINT8);
 void enablesound();
 void setupinitialsprites(); 
 void setupinitialbackground();
@@ -151,8 +150,9 @@ void drawdino(UBYTE jumping){
 			playstep();
 		}
 	}
-	
-	movecharactersprites(&dino);
+	// only need to move dino if jumping
+	// as moving sprites is cpu intensive
+	if(jumping) movecharactersprites(&dino);
 }
 
 void movecharactersprites(struct PG* character){
@@ -245,8 +245,6 @@ UINT8 getscreenquadrant(UINT8 screenoffset){
 void drawscore(){
 	UINT8 score[1] = {12};
 	UINT8 digitmap[1];
-	//sys_time Time in VBL periods (60Hz).
-	//set_win_tiles (UINT8 x, UINT8 y, UINT8 w, UINT8 h, unsigned char * tiles)
 	UINT16 time;
 	INT8 numdigitsdrawn = 0;
 
@@ -258,19 +256,12 @@ void drawscore(){
 	time = (sys_time-laststarttime)/60;
 
 	while (time != 0) {
-		//printf("%u ",(UINT16)time);
-		digitmap[0] = (UINT8)(time % 10 + 12);
+		digitmap[0] = time % 10 + 12;
 		// draw next lowest digit
-		
 		set_win_tiles(10 - numdigitsdrawn, 0, 1, 1, digitmap);
-		//set_win_tiles(10,0,1,1,score);
 		numdigitsdrawn++;
-		
-		time = time/10; // TODO cant devide by 10 as would get non int
-		
+		time = time/10;
 	}
-	
-	//set_win_tiles(10,0,1,1,score);
 }
 
 void clearscore(){
@@ -340,6 +331,8 @@ void setupinitialsprites(){
 	dino.startspriteid = 0;
 	dino.initialized = 1;
 	lastspriteid = 8; // dino fills 0-8
+	movecharactersprites(&dino);
+
 	setupcharactersprites(&dino); // & is saying pass a pointer to the function
 }
 
@@ -388,7 +381,7 @@ void generatenextobstacles(){
 			obstacles[currentindex].initialized = 1;
 			obstacles[currentindex].startspriteid =  lastspriteid;
 			
-			obstacles[currentindex].x = (UINT8)(xoffsetfromstart + (k * 8)); // 2nd obstacle will always be 8 pixels to the right of first
+			obstacles[currentindex].x = (xoffsetfromstart + (k * 8)); // 2nd obstacle will always be 8 pixels to the right of first
 			obstacles[currentindex].y = 81;
 			obstacles[currentindex].width = 8;
 			obstacles[currentindex].height = 16;
