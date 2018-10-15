@@ -249,12 +249,12 @@ void drawscore(){
 	UINT16 time;
 	INT8 numdigitsdrawn = 0;
 
-	// dont want to redraw more than once per second
-	if(sys_time%60 != 0){
+	// dont want to redraw more than once per half second
+	if(sys_time % 30 != 0){
 		return;
 	}
 
-	time = (sys_time-laststarttime)/60;
+	time = (sys_time-laststarttime)/30; // per second scoring felt too slow
 
 	while (time != 0) {
 		digitmap[0] = time % 10 + 17;
@@ -279,6 +279,7 @@ void clearscore(){
 
 void resetgame(){
 	DISPLAY_OFF; // turn off so we dont see big redraw
+	HIDE_SPRITES;
 	gameover = 0;
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
@@ -298,6 +299,7 @@ void resetgame(){
 	setupinitialsprites(); // create initial sprites
 	clearscore();
 	drawdino(1);
+	SHOW_SPRITES;
 	DISPLAY_ON;
 }
 
