@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <rand.h>
-#include <gb/drawing.h>
-#include <gb/font.h>
 #include "sprites.h"
 #include "sprites.c"
 #include "background.h"
 #include "background.c"
 #include "map.h"
 #include "map.c"
+#include "font.h" // tried using built in fonts but including font.h broke code on real device?
+#include "font.c"
 
 
 // =========================================================
@@ -47,12 +47,14 @@ void movecharactersprites(struct PG* character);
 void generatenextobstacles();
 UBYTE checkanycollisions();
 UBYTE checkcollides(struct PG* one,struct PG* two, UINT8 minx);
-
-const unsigned char blankmap[]={0x00};
-const UINT8 jump_array[] = {-26,-6,-3,-1,1,3,6, 26};
-const UBYTE dinospritemap[] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const UBYTE smallcactispritemap[] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const UBYTE largecactispritemap[] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
+const unsigned char blankmap[1] =
+{
+	0x00
+};
+const UINT8 jump_array[8] = {-26,-6,-3,-1,1,3,6, 26};
+const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
+const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
+const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime;
@@ -284,7 +286,7 @@ void drawscore(){
 	time = (sys_time-laststarttime)/30; // per second scoring felt too slow
 
 	while (time != 0) {
-		digitmap[0] = time % 10 + 17;
+		digitmap[0] = time % 10 + 12;
 		// draw next lowest digit
 		set_win_tiles(10 - numdigitsdrawn, 0, 1, 1, digitmap);
 		numdigitsdrawn++;
@@ -293,9 +295,9 @@ void drawscore(){
 }
 
 void clearscore(){
-	UINT8 clearmap[10] = {0,0,0,0,0,0,0,0,0,0};
-	set_win_tiles(0, 0, 1, 1, clearmap);
-	clearmap[0] = 17;
+	UINT8 clearmap[10] = {11,11,11,11,11,11,11,11,11,11};
+	set_win_tiles(0, 0, 10, 1, clearmap);
+	clearmap[0] = 12;
 	set_win_tiles(10, 0, 1, 1, clearmap);
 }
 
@@ -332,11 +334,7 @@ void resetgame(){
 
 void setupinitialwindow(){
 	// load window tiles
-	UINT8 blank[1] = {0};
-	//Load the GBDK default font (the tiles will be located on the BG VRAM between index 1-96 (0x01-0x60)
-	font_init();
-	//color(BLACK, LTGREY, SOLID);
-	font_load(font_ibm);
+	set_win_data(11,11,Font);
 
 	// write a clear sprite to every window block
 	// write a clear sprite to every background block
