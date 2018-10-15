@@ -81,6 +81,7 @@ void main() {
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
 			if(checkanycollisions()==1){
+				set_sprite_tile(1,12); // draw dinos SUPRISE eye
 				running = 0;
 				gameover = 1;
 
@@ -351,7 +352,7 @@ void setupinitialwindow(){
 }
 
 void setupinitialsprites(){
-	set_sprite_data(0, 12, SpritesData);   /* defines the sprite data for all sprites */
+	set_sprite_data(0, 13, SpritesData);   /* defines the sprite data for all sprites */
 
 	// create dino character
 	// copy array of dinos sprite ids into dino.ids using memcpy
