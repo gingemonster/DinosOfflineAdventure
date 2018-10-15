@@ -33,6 +33,8 @@ void checkInput();
 void checkjumping();
 void updateSwitches();
 void drawdino(UBYTE);
+void drawgameover();
+void playgameover();
 void scrollbgandobstacles();
 void playjump();
 void playstep();
@@ -55,6 +57,7 @@ const UINT8 jump_array[8] = {-26,-6,-3,-1,1,3,6, 26};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
+const UBYTE gameovermap[21] = {28,0,22,0,34,0,26,0,0,0,0,0,0,0,36,0,43,0,26,0,39};
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime;
@@ -84,6 +87,8 @@ void main() {
 			scrollbgandobstacles();
 			if(checkanycollisions()==1){
 				set_sprite_tile(1,12); // draw dinos SUPRISE eye
+				drawgameover();
+				playgameover();
 				running = 0;
 				gameover = 1;
 
@@ -258,7 +263,6 @@ void scrollbgandobstacles(){
 	}
 }
 
-
 UINT8 getscreenquadrant(UINT8 screenoffset){
 	if(screenoffset < 64){
 		return 0;
@@ -301,10 +305,16 @@ void clearscore(){
 	set_win_tiles(10, 0, 1, 1, clearmap);
 }
 
+void drawgameover(){
+	cls();
+	move_bkg(0,0);
+	set_bkg_data(11, 35, Font);
+	set_bkg_tiles(6,4,7,3,gameovermap);
+}
+
 // =========================================================
 // Initialisation / reset functions at very start of game
 // =========================================================
-
 
 void resetgame(){
 	DISPLAY_OFF; // turn off so we dont see big redraw
@@ -505,7 +515,7 @@ void checkjumping(){
 }
 
 void checkInput() {
-	if((joypad() & J_A) && apressed == 0 && running) // only want to jump once per keypress
+	if(joypad() && apressed == 0 && running) // only want to jump once per keypress
 	{
 		apressed = 1;
 		// dont jump if already jumping
@@ -514,11 +524,11 @@ void checkInput() {
 			jumpindex = 0;
 		}
 	}
-	else if ((joypad() & J_A) && apressed == 1 && running)
+	else if (joypad() && apressed == 1 && running)
 	{
 		// do nothing user is still pressing A
 	}
-	else if(joypad() & J_A && !running){
+	else if(joypad() && !running){
 		// not running and they press A so start / reset
 		laststarttime = sys_time;
 		if(gameover){
@@ -538,7 +548,6 @@ void checkInput() {
 		apressed = 1;
 	}
 }
-
 
 // =========================================================
 // Sound functions
@@ -619,4 +628,13 @@ void playstep(){
 	NR42_REG = 0x11;
 	NR43_REG = 0x00;
 	NR44_REG = 0xC0;
+}
+
+void playgameover(){
+	//Sound : Game Over sound
+	NR10_REG = 0x7D; //or 1E or 1D for louder sound / 2E / 3E / 4E... for more "vibe"
+	NR11_REG = 0xBF;
+	NR12_REG = 0xF6; //B7, C7, D7...F7 for longer sound
+	NR13_REG = 0x7C;
+	NR14_REG = 0x86;
 }
