@@ -140,15 +140,25 @@ void drawdino(UBYTE jumping){
 	// dont want to play anim every frame so skip some
 	
 	if(shouldrenderanimationframe()){
-		frame = !frame;
-		if(frame || jumping){
+		if(frame==0 || jumping){
+			// both legs down
+			frame = 1;
 			set_sprite_tile(5,5); 
 			set_sprite_tile(6,6);
 		}
+		else if(frame==1){
+				// right leg up
+				set_sprite_tile(5,5); 
+				set_sprite_tile(6,8);
+				playstep();			
+				frame=2;
+		}	
 		else{
-			set_sprite_tile(5,7); 
-			set_sprite_tile(6,8);
-			playstep();
+				// left leg up
+				set_sprite_tile(5,7); 
+				set_sprite_tile(6,6);
+				playstep();					
+				frame=0;
 		}
 	}
 	// only need to move dino if jumping
