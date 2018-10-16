@@ -10,6 +10,8 @@
 #include "map.c"
 #include "font.h" // tried using built in fonts but including font.h broke code on real device?
 #include "font.c"
+#include "splashscreen.c"
+#include "splashscreenmap.c"
 
 
 // =========================================================
@@ -42,6 +44,7 @@ void enablesound();
 void setupinitialsprites(); 
 void setupinitialbackground();
 void setupinitialwindow();
+void drawsplashscreen();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -71,7 +74,10 @@ struct PG dino;
 struct PG gameoversprite;
 
 void main() {
-	
+	drawsplashscreen();
+	waitpad(J_A|J_B|J_START);
+
+
 	enablesound();
 	resetgame();
 	
@@ -324,6 +330,26 @@ void drawgameover(){
 	lastspriteid = 8; // dino fills 0-8
 	setupcharactersprites(&gameoversprite); // & is saying pass a pointer to the function
 	movecharactersprites(&gameoversprite,4,2,2);
+}
+
+void drawsplashscreen(){
+	// Load up the tile data	
+     set_bkg_data(0,255,splashscreendata);
+
+     // Switch to VRAM
+     VBK_REG = 1;
+
+     // Switch out of VRAM
+     VBK_REG = 0;
+
+     // Set screen x,y pos to 0,0 and draw the map 20,18(size of the screen)
+     set_bkg_tiles(0,0,20,18,splashscreenmap);
+
+     // Show the background
+     SHOW_BKG;
+
+     // Turn the display on
+     DISPLAY_ON; 
 }
 
 // =========================================================
