@@ -735,24 +735,38 @@ typedef struct {
 //This song is a 16 note loop on channel 1
 //each channel should have its own array, so
 //that multiple notes can be played simultaneously
-note song_ch1[16] = { //notes to be played on channel 1
+note song_ch1[14] = { //notes to be played on channel 1
+	// {MELODY, A5, 0x81U},
+	// {MELODY, C5, 0xA2U},
+	// {MELODY, E5, 0x81U},
+	// {MELODY, Gd5, 0x84U},
+	// {HARMONY, C4, 0x81U},
+	// {HARMONY, E7, 0x87U},
+	// {MELODY, C6, 0x81U},
+	// {NONE, SILENCE, 0x00U},
+	// {NONE, SILENCE, 0x00U},
+	// {MELODY, E4, 0x81U},
+	// {MELODY, F4, 0x84U},
+	// {HARMONY, G5, 0x81U},
+	// {NONE, SILENCE, 0x00U},
+	// {MELODY, F5, 0x84U},
+	// {HARMONY, B4, 0x81U},
+	// {NONE, SILENCE, 0x00U},
+	// {NONE, SILENCE, 0x00U}
 	{MELODY, A5, 0x81U},
-	{MELODY, C5, 0xA2U},
-	{MELODY, E5, 0x81U},
-	{MELODY, Gd5, 0x84U},
-	{HARMONY, C4, 0x81U},
-	{HARMONY, E7, 0x87U},
-	{MELODY, C6, 0x81U},
 	{NONE, SILENCE, 0x00U},
+	{MELODY, A5, 0x81U},
 	{NONE, SILENCE, 0x00U},
-	{MELODY, E4, 0x81U},
-	{MELODY, F4, 0x84U},
-	{HARMONY, G5, 0x81U},
+	{MELODY, A5, 0x81U},
+	{MELODY, A5, 0x81U},
+	{MELODY, E6, 0x81U},
+	{MELODY, G5, 0x81U},
+	{MELODY, E6, 0x81U},
+	{MELODY, G5, 0x81U},
+	{MELODY, E6, 0x81U},
+	{MELODY, G5, 0x81U},
 	{NONE, SILENCE, 0x00U},
-	{MELODY, F5, 0x84U},
-	{HARMONY, B4, 0x81U},
-	{NONE, SILENCE, 0x00U},
-	{NONE, SILENCE, 0x00U}
+	{NONE, SILENCE, 0x00U}	
 };
 
 //function to set sound registers based on notes chosen
