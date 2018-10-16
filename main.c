@@ -79,12 +79,20 @@ void main() {
 	enablesound();
 	drawsplashscreen();
 	
-	splashscreen = 1;
+	// set music playing in bg
+ 	disable_interrupts();
+    add_TIM(playmusicnext);
+    enable_interrupts();
+    TAC_REG = 0x06; // Not sure what this actually does but it overrides a default for the timer I think
+    set_interrupts(TIM_IFLAG|VBL_IFLAG);
 
-	while(splashscreen){
-		playmusicnext();
-		checkInput();
-	}
+	// wait for any of these buttons to be pressed
+	waitpad(J_A|J_B|J_SELECT|J_START);
+	
+	// remove music time interupt handler
+	disable_interrupts();
+	remove_TIM(playmusicnext);
+	
 	
 	resetgame();
 
@@ -560,10 +568,7 @@ void checkjumping(){
 }
 
 void checkInput() {
-	if(joypad() && splashscreen){
-		splashscreen = 0;
-	}
-	else if(joypad() && apressed == 0 && running) // only want to jump once per keypress
+	if(joypad() && apressed == 0 && running) // only want to jump once per keypress
 	{
 		apressed = 1;
 		// dont jump if already jumping
@@ -793,7 +798,7 @@ void playChannel1(){
 
 //Timer function gets called 16 times a second
 void playmusicnext(){
-	if (timerCounter == 350){ // as on splashscreen and CPU looping fast only play every 350 cycles
+	if (timerCounter == 50){ // as on splashscreen and CPU looping fast only play every 350 cycles
 		timerCounter=0;
 		currentBeat = currentBeat == 15 ? 0 : currentBeat+1;
 		playChannel1(); //every beat, play the sound for that beat
