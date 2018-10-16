@@ -64,7 +64,7 @@ const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 
 const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
-UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
+UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter = 0;
 UINT8 frame,lastspriteid,h,i,j,k, currentBeat;
 INT8 jumpindex,lastobstacleindex;
 UBYTE hasmovedy,apressed,running,gameover,splashscreen;
@@ -75,21 +75,18 @@ struct PG dino;
 struct PG gameoversprite;
 
 void main() {
+	wait_vbl_done();
 	enablesound();
 	drawsplashscreen();
+	
 	splashscreen = 1;
-	while(splashscreen == 1){
-		checkInput();
+
+	while(splashscreen){
 		playmusicnext();
+		checkInput();
 	}
 	
 	resetgame();
-// 	disable_interrupts();
-// 	add_TIM(timerInterrupt);
-// 	enable_interrupts();
-// 	set_interrupts(TIM_IFLAG);
-//   /* Set TMA to divide clock by 0x100 */
-
 
 	while(1) {
 		checkInput();
@@ -107,9 +104,6 @@ void main() {
 				playgameover();
 				running = 0;
 				gameover = 1;
-
-				// TODO show game over
-
 				delay(1000); // otherwise user immediately will reset
 			}
 		}
@@ -342,14 +336,15 @@ void drawgameover(){
 }
 
 void drawsplashscreen(){
+	DISPLAY_OFF;	
 	// Load up the tile data	
      set_bkg_data(0,255,splashscreendata);
 
-     // Switch to VRAM
-     VBK_REG = 1;
+    //  // Switch to VRAM
+    //  VBK_REG = 1;
 
-     // Switch out of VRAM
-     VBK_REG = 0;
+    //  // Switch out of VRAM
+    //  VBK_REG = 0;
 
      // Set screen x,y pos to 0,0 and draw the map 20,18(size of the screen)
      set_bkg_tiles(0,0,20,18,splashscreenmap);
@@ -565,7 +560,7 @@ void checkjumping(){
 }
 
 void checkInput() {
-	if(joypad()&&splashscreen){
+	if(joypad() && splashscreen){
 		splashscreen = 0;
 	}
 	else if(joypad() && apressed == 0 && running) // only want to jump once per keypress
@@ -786,10 +781,6 @@ void setNote(note *n){
 			NR13_REG = (UBYTE)frequencies[(*n).p];
 			NR14_REG = 0x80U | ((UWORD)frequencies[(*n).p]>>8);
 		break;
-		case SNARE:
-		break;
-		case CYMBAL:
-		break;
 	}
 }
 
@@ -806,9 +797,6 @@ void playmusicnext(){
 		timerCounter=0;
 		currentBeat = currentBeat == 15 ? 0 : currentBeat+1;
 		playChannel1(); //every beat, play the sound for that beat
-		//playChannel2(); make more functions to play sounds on 
-		//playChannel3(); the other channels
-		//playChannel4();
 	}
 	timerCounter++;
 }
