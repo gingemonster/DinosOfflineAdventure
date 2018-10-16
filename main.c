@@ -45,7 +45,7 @@ void setupinitialwindow();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
-void movecharactersprites(struct PG* character);
+void movecharactersprites(struct PG* character, UINT8 width, UINT8 height, UINT8 spacing);
 void generatenextobstacles();
 UBYTE checkanycollisions();
 UBYTE checkcollides(struct PG* one,struct PG* two, UINT8 minx);
@@ -57,17 +57,18 @@ const UINT8 jump_array[8] = {-26,-6,-3,-1,1,3,6, 26};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const UBYTE gameovermap[21] = {28,0,22,0,34,0,26,0,0,0,0,0,0,0,36,0,43,0,26,0,39};
+const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime;
-UINT8 frame,lastspriteid;
-INT8 h,i,j,k,jumpindex,lastobstacleindex;
+UINT8 frame,lastspriteid,h,i,j,k;
+INT8 jumpindex,lastobstacleindex;
 UBYTE hasmovedy,apressed,running,gameover;
 
 
 struct PG obstacles[4]; // 4 in vram at once
 struct PG dino;
+struct PG gameoversprite;
 
 void main() {
 	
@@ -171,19 +172,24 @@ void drawdino(UBYTE jumping){
 	}
 }
 
-void movecharactersprites(struct PG* character){
+void movecharactersprites(struct PG* character, UINT8 width, UINT8 height, UINT8 spacing){
+	UINT8 spacingaccumulatorx = 0;
+	UINT8 spacingaccumulatory = 0;	
 	h = 0; // h needed to keep track of sprite maps that are not empty
-	
 	// dont bother moving a character if its not initialized, probably empty obstacle
 	if(character->initialized==1){
-		for(i=0;i!=3;i++){
-			for(j=0;j!=3;j++){
+		for(i=0;i!=height;i++){
+			spacingaccumulatory += spacing;
+			
+			for(j=0;j!=width;j++){
+				spacingaccumulatorx += spacing;
 				// increment characters sprite map through all 3x3 grid of sprite maps, checking if any should be ignored
 				if(character->spritemapids[(i * 3 + j)] != 255){
-					move_sprite(character->startspriteid + h,character->x + (j*8),character->y + (i*8));
+					move_sprite(character->startspriteid + h,character->x + (j*8) + spacingaccumulatorx,character->y + (i*8) + spacingaccumulatory);
 					h++;
 				}
 			}
+			spacingaccumulatorx = 0; // reset for each line
 		}
 	}
 }
@@ -306,10 +312,18 @@ void clearscore(){
 }
 
 void drawgameover(){
-	cls();
-	move_bkg(0,0);
-	set_bkg_data(11, 35, Font);
-	set_bkg_tiles(6,4,7,3,gameovermap);
+	set_sprite_data(13, 35, Font); // load font data
+	// copy array of dinos sprite ids into dino.ids using memcpy
+	memcpy(gameoversprite.spritemapids,gameovermap, sizeof(gameovermap)); 
+	gameoversprite.x = 68;
+	gameoversprite.y = 40;
+	gameoversprite.width = 24; // technical sprites take up 24px but looks more like he hits at 18
+	gameoversprite.height = 16;
+	gameoversprite.startspriteid = 18;
+	gameoversprite.initialized = 1;
+	lastspriteid = 8; // dino fills 0-8
+	setupcharactersprites(&gameoversprite); // & is saying pass a pointer to the function
+	movecharactersprites(&gameoversprite,4,2,2);
 }
 
 // =========================================================
@@ -328,9 +342,13 @@ void resetgame(){
 	//reset and empty obstacles
 	for(k=0;k!=4;k++){
 		obstacles[k].x=240;
-		movecharactersprites(&obstacles[k]);
+		movecharactersprites(&obstacles[k],3,3,0);
 		obstacles[k].initialized = 0;
 	}
+
+	// clear gameover off screen
+	gameoversprite.x = 180;
+	movecharactersprites(&gameoversprite,4,2,2);
 
 	// reset sprites
 	setupinitialwindow();
@@ -372,9 +390,8 @@ void setupinitialsprites(){
 	dino.startspriteid = 0;
 	dino.initialized = 1;
 	lastspriteid = 8; // dino fills 0-8
-	movecharactersprites(&dino);
-
 	setupcharactersprites(&dino); // & is saying pass a pointer to the function
+	movecharactersprites(&dino,3,3,0);
 }
 
 void generatenextobstacles(){
@@ -387,8 +404,6 @@ void generatenextobstacles(){
 
 	// get random number between 192 and 240 (256-2*8 so two sprites wide)
 	xoffsetfromstart = 192 + rand() % 49;
-
-	//lastspriteid
 
 	// generate up to two obstacles
 	for(k=0;k!=2;k++){
@@ -441,7 +456,7 @@ void generatenextobstacles(){
 
 			// load the map images into sprites overwriting any previous ones
 			setupcharactersprites(&obstacles[currentindex]);
-			movecharactersprites(&obstacles[currentindex]);
+			movecharactersprites(&obstacles[currentindex],3,3,0);
 		}
 	}
 }
