@@ -735,37 +735,75 @@ typedef struct {
 //This song is a 16 note loop on channel 1
 //each channel should have its own array, so
 //that multiple notes can be played simultaneously
-note song_ch1[14] = { //notes to be played on channel 1
-	// {MELODY, A5, 0x81U},
-	// {MELODY, C5, 0xA2U},
-	// {MELODY, E5, 0x81U},
-	// {MELODY, Gd5, 0x84U},
-	// {HARMONY, C4, 0x81U},
-	// {HARMONY, E7, 0x87U},
-	// {MELODY, C6, 0x81U},
-	// {NONE, SILENCE, 0x00U},
-	// {NONE, SILENCE, 0x00U},
-	// {MELODY, E4, 0x81U},
-	// {MELODY, F4, 0x84U},
-	// {HARMONY, G5, 0x81U},
-	// {NONE, SILENCE, 0x00U},
-	// {MELODY, F5, 0x84U},
-	// {HARMONY, B4, 0x81U},
-	// {NONE, SILENCE, 0x00U},
-	// {NONE, SILENCE, 0x00U}
-	{MELODY, A5, 0x81U},
+note song_ch1[66] = { //notes to be played on channel 1
+{NONE, SILENCE, 0x00U},
 	{NONE, SILENCE, 0x00U},
-	{MELODY, A5, 0x81U},
+	{MELODY, G5, 0x83U},
 	{NONE, SILENCE, 0x00U},
-	{MELODY, A5, 0x81U},
-	{MELODY, A5, 0x81U},
-	{MELODY, E6, 0x81U},
-	{MELODY, G5, 0x81U},
-	{MELODY, E6, 0x81U},
-	{MELODY, G5, 0x81U},
-	{MELODY, E6, 0x81U},
-	{MELODY, G5, 0x81U},
+	{MELODY, G5, 0x83U},
 	{NONE, SILENCE, 0x00U},
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, E6, 0x90U},	
+	{NONE, SILENCE, 0x00U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, D6, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, C6, 0x83U},
+
+	{NONE, SILENCE, 0x00U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, G6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, F6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, E6, 0x90U},
+	{NONE, SILENCE, 0x00U},	
+	{NONE, SILENCE, 0x00U},	
+	{NONE, SILENCE, 0x00U},	
+
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, D5, 0x83U},
+	{MELODY, D5, 0x83U},
+	{MELODY, D5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, G5, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, C6, 0x83U},
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, G6, 0x83U},
+	{MELODY, F6, 0x83U},
+	{MELODY, G6, 0x83U},
+	{MELODY, F6, 0x83U},
+	{MELODY, G6, 0x83U},
+	{MELODY, C6, 0x83U},
+	{MELODY, C6, 0x83U},
 	{NONE, SILENCE, 0x00U}	
 };
 
@@ -798,9 +836,9 @@ void playChannel1(){
 
 //Timer function gets called 16 times a second
 void playmusicnext(){
-	if (timerCounter == 50){ // as on splashscreen and CPU looping fast only play every 350 cycles
+	if (timerCounter == 35){ // as on splashscreen and CPU looping fast only play every 350 cycles
 		timerCounter=0;
-		currentBeat = currentBeat == 15 ? 0 : currentBeat+1;
+		currentBeat = currentBeat == 66 ? 0 : currentBeat+1;
 		playChannel1(); //every beat, play the sound for that beat
 	}
 	timerCounter++;
