@@ -46,6 +46,7 @@ void setupinitialbackground();
 void setupinitialwindow();
 void drawsplashscreen();
 void playmusicnext();
+void clearscreen();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -78,6 +79,7 @@ void main() {
 	wait_vbl_done();
 	enablesound();
 	drawsplashscreen();
+
 	
 	// set music playing in bg
  	disable_interrupts();
@@ -147,7 +149,7 @@ UBYTE checkcollides(struct PG* one, struct PG* two, UINT8 minx){
 		(two->y <= one->y && two->y >= one->y - one->height));
 }
 
-void cls(){
+void clearscreen(){
 	// write a clear sprite to every background block
 	for (j=0 ; j != 32 ; j++){
 		for (i=0 ; i != 32 ; i++){		
@@ -515,7 +517,7 @@ void setupcharactersprites(struct PG* character){
 
 void setupinitialbackground(){
 	set_bkg_data(0, 11, BackgroundData); // load background data into tileset
-	cls(); // clear background so that all tiles are blank to start with
+	clearscreen(); // clear background so that all tiles are blank to start with
 
 	set_bkg_tiles(0,10,32,1,map); // draw first background row
 	set_bkg_tiles(0,11,32,1,&map[96]); // draw second background row	
