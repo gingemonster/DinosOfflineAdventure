@@ -89,12 +89,12 @@ void main() {
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
 	
-	// remove music time interupt handler
-	disable_interrupts();
-	remove_TIM(playmusicnext);
-	
 	
 	resetgame();
+
+	// remove music time interupt handler
+	disable_interrupts();
+	remove_TIM(playmusicnext);	
 
 	while(1) {
 		checkInput();
