@@ -11,4 +11,4 @@ del *.sav
 copy /b ..\..\tools\goombacolor_12_14_2014\goomba.gba+chromedino.gb goombachromedino.gba
 
 REM..\..\tools\bgbw64\bgb64 -rom chromedino.gb
-..\..\tools\mGBA-0.6.3-win32\mGBA.exe goombachromedino.gba
+REM..\..\tools\mGBA-0.6.3-win32\mGBA.exe goombachromedino.gba
