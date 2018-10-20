@@ -737,76 +737,50 @@ typedef struct {
 //This song is a 16 note loop on channel 1
 //each channel should have its own array, so
 //that multiple notes can be played simultaneously
-note song_ch1[66] = { //notes to be played on channel 1
-{NONE, SILENCE, 0x00U},
+note song_ch1[40] = { //notes to be played on channel 1
 	{NONE, SILENCE, 0x00U},
+	{MELODY, D5, 0x83U},
+	{MELODY, E5, 0x83U},
 	{MELODY, G5, 0x83U},
+	{MELODY, D5, 0x83U},
+	{MELODY, E5, 0x83U},
+	{MELODY, G5, 0x83U},	
 	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
+	{MELODY, B6, 0x83U},
+	{MELODY, B6, 0x83U},
+	{MELODY, A6, 0x83U},
+	{MELODY, G6, 0x83U},	
 	{NONE, SILENCE, 0x00U},
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, E6, 0x90U},	
-	{NONE, SILENCE, 0x00U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, D6, 0x83U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, C6, 0x83U},
+	{MELODY, D6, 0x83U},	
+	{MELODY, Dd6, 0x83U},
+	{MELODY, E6, 0x83U},
 
-	{NONE, SILENCE, 0x00U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, G6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, F6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, E6, 0x90U},
-	{NONE, SILENCE, 0x00U},	
-	{NONE, SILENCE, 0x00U},	
-	{NONE, SILENCE, 0x00U},	
-
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, G5, 0x83U},
-	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
+	{MELODY, D5, 0x83U},
 	{NONE, SILENCE, 0x00U},	
 	{MELODY, D5, 0x83U},
-	{MELODY, D5, 0x83U},
-	{MELODY, D5, 0x83U},
+	{MELODY, E5, 0x83U},	
+	{MELODY, G5, 0x83U},
+	{MELODY, E5, 0x83U},	
+	{NONE, SILENCE, 0x00U},	
+	{MELODY, B4, 0x86U},
 	{NONE, SILENCE, 0x00U},
 
+	{MELODY, E5, 0x83U},	
+	{MELODY, G5, 0x83U},		
+	{MELODY, E5, 0x83U},	
 	{MELODY, G5, 0x83U},
+	{MELODY, E5, 0x83U},	
 	{NONE, SILENCE, 0x00U},
-	{MELODY, G5, 0x83U},
+
+	{MELODY, B4, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, D5, 0x83U},	
+	{MELODY, Dd5, 0x83U},
+	{MELODY, E5, 0x83U},
+	{NONE, SILENCE, 0x00U},
+	{MELODY, E4, 0x77U},
+	{NONE, SILENCE, 0x00U},
 	{NONE, SILENCE, 0x00U},	
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U},	
-	{MELODY, G6, 0x83U},
-	{MELODY, F6, 0x83U},
-	{MELODY, G6, 0x83U},
-	{MELODY, F6, 0x83U},
-	{MELODY, G6, 0x83U},
-	{MELODY, C6, 0x83U},
-	{MELODY, C6, 0x83U},
-	{NONE, SILENCE, 0x00U}	
 };
 
 //function to set sound registers based on notes chosen
@@ -824,7 +798,7 @@ void setNote(note *n){
 			NR11_REG = 0x00U; //wave duty for harmony is different
 			NR12_REG = (*n).env;
 			NR13_REG = (UBYTE)frequencies[(*n).p];
-			NR14_REG = 0x80U | ((UWORD)frequencies[(*n).p]>>8);
+			NR14_REG = 0x82U | ((UWORD)frequencies[(*n).p]>>8);
 		break;
 	}
 }
@@ -838,9 +812,9 @@ void playChannel1(){
 
 //Timer function gets called 16 times a second
 void playmusicnext(){
-	if (timerCounter == 35){ // as on splashscreen and CPU looping fast only play every 350 cycles
+	if (timerCounter == 52){ // as on splashscreen and CPU looping fast only play every 350 cycles
 		timerCounter=0;
-		currentBeat = currentBeat == 66 ? 0 : currentBeat+1;
+		currentBeat = currentBeat == 40 ? 0 : currentBeat+1;
 		playChannel1(); //every beat, play the sound for that beat
 	}
 	timerCounter++;
