@@ -58,7 +58,7 @@ const unsigned char blankmap[1] =
 {
 	0x00
 };
-const UINT8 jump_array[8] = {-26,-6,-3,-1,1,3,6, 26};
+const UINT8 jump_array[7] = {-26,-3,-1,1,3, 7, 19};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
@@ -336,7 +336,7 @@ void drawgameover(){
 	memcpy(gameoversprite.spritemapids,gameovermap, sizeof(gameovermap)); 
 	gameoversprite.x = 68;
 	gameoversprite.y = 40;
-	gameoversprite.width = 24; // technical sprites take up 24px but looks more like he hits at 18
+	gameoversprite.width = 24; 
 	gameoversprite.height = 16;
 	gameoversprite.startspriteid = 18;
 	gameoversprite.initialized = 1;
@@ -479,7 +479,7 @@ void generatenextobstacles(){
 			
 			obstacles[currentindex].x = (xoffsetfromstart + (k * 8)); // 2nd obstacle will always be 8 pixels to the right of first
 			obstacles[currentindex].y = 81;
-			obstacles[currentindex].width = 8;
+			obstacles[currentindex].width = 7; // technically 8 but looks clearer and fairer it collisions calculated at 7
 			obstacles[currentindex].height = 16;
 
 			if(randomnum==0){
