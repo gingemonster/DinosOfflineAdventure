@@ -46,7 +46,7 @@ void setupinitialbackground();
 void setupinitialwindow();
 void drawsplashscreen();
 void playmusicnext();
-void clearscreen();
+void clearbackground();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -63,11 +63,14 @@ const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate n
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
+const UBYTE cleardigitsmap[8] = {11,11,11,11,11,11,11,12};
+const UBYTE highscoremap[10] = {0x1D,0x1E,0x1C,0x1D,0x0B,0x28,0x18,0x24,0x27,0x1A};
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
-UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter = 0;
+UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
 UINT8 frame,lastspriteid,h,i,j,k, currentBeat;
 INT8 jumpindex,lastobstacleindex;
+INT16 sessionhighscore;
 UBYTE hasmovedy,apressed,running,gameover,splashscreen;
 
 
@@ -79,7 +82,6 @@ void main() {
 	wait_vbl_done();
 	enablesound();
 	drawsplashscreen();
-
 	
 	// set music playing in bg
  	disable_interrupts();
@@ -90,8 +92,6 @@ void main() {
 
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
-	
-	
 	resetgame();
 
 	// remove music time interupt handler
@@ -149,7 +149,7 @@ UBYTE checkcollides(struct PG* one, struct PG* two, UINT8 minx){
 		(two->y <= one->y && two->y >= one->y - one->height));
 }
 
-void clearscreen(){
+void clearbackground(){
 	// write a clear sprite to every background block
 	for (j=0 ; j != 32 ; j++){
 		for (i=0 ; i != 32 ; i++){		
@@ -304,7 +304,7 @@ UINT8 getscreenquadrant(UINT8 screenoffset){
 void drawscore(){
 	UINT8 score[1] = {12};
 	UINT8 digitmap[1];
-	UINT16 time;
+	INT16 time;
 	INT8 numdigitsdrawn = 0;
 
 	// dont want to redraw more than once per half second
@@ -314,20 +314,41 @@ void drawscore(){
 
 	time = (sys_time-laststarttime)/30; // per second scoring felt too slow
 
+	if(time > sessionhighscore){
+		sessionhighscore = time;
+	}
+
 	while (time != 0) {
 		digitmap[0] = time % 10 + 12;
 		// draw next lowest digit
-		set_win_tiles(10 - numdigitsdrawn, 0, 1, 1, digitmap);
+		set_win_tiles(19- numdigitsdrawn, 0, 1, 1, digitmap);
 		numdigitsdrawn++;
 		time = time/10;
 	}
 }
+void drawhighscore(){
+	UINT8 digitmap[1];
+	INT16 time;
+	INT8 numdigitsdrawn = 0;
+	time = sessionhighscore;
+
+
+	while (time != 0) {
+		digitmap[0] = time % 10 + 12;
+		// draw next lowest digit
+		set_win_tiles(19 - numdigitsdrawn, 2, 1, 1, digitmap);
+		numdigitsdrawn++;
+		time = time/10;
+	}
+
+
+	if(sessionhighscore != 0){
+		set_win_tiles(9 - numdigitsdrawn, 2, 10, 1, highscoremap);
+	}	
+}
 
 void clearscore(){
-	UINT8 clearmap[10] = {11,11,11,11,11,11,11,11,11,11};
-	set_win_tiles(0, 0, 10, 1, clearmap);
-	clearmap[0] = 12;
-	set_win_tiles(10, 0, 1, 1, clearmap);
+	set_win_tiles(12, 0, 8, 1, cleardigitsmap);
 }
 
 void drawgameover(){
@@ -396,13 +417,14 @@ void resetgame(){
 	setupinitialsprites(); // create initial sprites
 	clearscore();
 	drawdino(1);
+	drawhighscore();
 	SHOW_SPRITES;
 	DISPLAY_ON;
 }
 
 void setupinitialwindow(){
 	// load window tiles
-	set_win_data(11,11,Font);
+	set_win_data(11,36,Font);
 
 	// write a clear sprite to every window block
 	// write a clear sprite to every background block
@@ -413,7 +435,7 @@ void setupinitialwindow(){
 	}
 	move_bkg(0,3);
 
-	move_win(75,130);
+	move_win(1,112);
 	drawscore();
 }
 
@@ -517,7 +539,7 @@ void setupcharactersprites(struct PG* character){
 
 void setupinitialbackground(){
 	set_bkg_data(0, 11, BackgroundData); // load background data into tileset
-	clearscreen(); // clear background so that all tiles are blank to start with
+	clearbackground(); // clear background so that all tiles are blank to start with
 
 	set_bkg_tiles(0,10,32,1,map); // draw first background row
 	set_bkg_tiles(0,11,32,1,&map[96]); // draw second background row	
@@ -585,10 +607,10 @@ void checkInput() {
 	}
 	else if(joypad() && !running){
 		// not running and they press A so start / reset
-		laststarttime = sys_time;
 		if(gameover){
 			resetgame();
 		}
+		laststarttime = sys_time;
 		running = 1;
 		apressed = 1;
 	}
