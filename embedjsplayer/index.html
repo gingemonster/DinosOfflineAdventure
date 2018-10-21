@@ -1,0 +1,398 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Dino's Offline Adventure by Gaming Monsters</title>
+		<link rel="stylesheet" href="stylesheets/styles.css">
+		<link rel="shortcut icon" href="images/favicon.png">
+		<!-- LOAD GameBoyOnline Emulator: https://github.com/taisel/GameBoy-Online -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<script src="js/GameBoyCore.js"></script>
+		<script src="js/GameBoyIO.js"></script>
+		<script src="js/other/json2.js"></script>
+		<script src="js/other/swfobject.js"></script>
+		<script src="js/other/resampler.js"></script>
+		<script src="js/other/XAudioServer.js"></script>
+		<script src="js/other/resize.js"></script>
+		<!-- <script src="js/other/base64.js"></script>-->
+		<script>
+			//Activitate event logging
+			var cout = console.log.bind(console);
+			
+			//Variable used to store the game rom
+			rom=null;
+			
+			//When the page is loaded, preloads the rom automatically
+			window.onload = function() {
+				/*
+				//Dynamically resize the canvas to fit the screen
+				var scaleX = window.innerWidth / 160;
+				var scaleY = (window.innerHeight-100) / 144;
+
+				//Compute a resizing scale with an integer scale factor (pixel perfect!)
+				var scale = Math.floor( Math.min(scaleX, scaleY) );
+				scale=2;
+				
+				//Resize the canvas screen
+				document.getElementById("screen").width = 160*scale;
+				document.getElementById("screen").height = 144*scale;
+				//Resize the container too
+				document.getElementById("game").style.width = 160*scale;
+				document.getElementById("game").style.height = 144*scale;
+				//Resize the splash screen too
+				/*document.getElementById("splash").style.width = 160*scale;
+				document.getElementById("splash").style.height = 144*scale;
+				*/
+				
+				//Read the rom from the external file, and preloads it
+				loadViaXHR();
+				
+				
+			}
+			
+			//Load the external rom file, and store it inside the "rom" variable
+			function loadViaXHR () {
+			
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "dinosofflineadventure.gb");
+				xhr.responseType = "blob";
+				//Callback function 
+				xhr.onload = function () {
+					//Store the rom on a variable to use it latter
+					rom=this.response;
+				};
+				//load the rom!
+				xhr.send();			
+			}
+			
+			//This function feeds the binary rom to the emulator in order to load it
+			function startGame(blob) {
+				var binaryHandle = new FileReader();
+				binaryHandle.onload = function () {
+					if (this.readyState === 2) {
+						start(document.getElementById('screen'), this.result);
+					}
+				};
+				binaryHandle.readAsBinaryString(blob);
+			};
+			
+			//This callback function launch hide the splash screen and start the emulator
+			function launchGame(){
+				
+				//Hide the splash screen
+				document.getElementById("splash").style.display = 'none';  
+				
+				//Start the game with the currently loaded rom
+				startGame( new Blob([rom], {type: "text/plain"}) );
+				
+				//Add click & touchscreen event => press B (one button game yeah!)
+				window.addEventListener('mousedown', mouseDown);
+				window.addEventListener('touchstart', mouseDown);
+				window.addEventListener('mouseup', mouseUp);
+				window.addEventListener('touchend', mouseUp);
+				window.addEventListener('mousemove', mouseMove);
+				window.addEventListener('touchmove', mouseMove);
+				
+				//Add keyboard events (use the keyboard map below);
+				window.addEventListener('keydown', keyDown);
+				window.addEventListener('keyup', keyUp);
+				window.addEventListener('blur', function() {
+					pressed = {};
+				});
+			}
+			
+			//MOUSE INTERACTION
+			var lastMove=0;
+			//A click/tap event will trigger a "Press B" event on the console emulator
+			function mouseDown( event ){
+				GameBoyKeyDown("b");
+				
+				//clear left / right movement
+				lastMove=event.screenX;
+				GameBoyKeyUp("left");
+				GameBoyKeyUp("right");
+			}
+			function mouseUp( event ){
+				GameBoyKeyUp("b");
+				
+				//clear left / right movement
+				lastMove=event.screenX;
+				GameBoyKeyUp("left");
+				GameBoyKeyUp("right");
+			}
+			//Move left / right whenever click ou touch is pressed down
+			function mouseMove( event ){
+				var moving=0;
+				
+				//Detect whether we moved left / right while holding button
+				//Touch based movement
+				if ( event.changedTouches != null ){
+					moving=event.changedTouches.item(0).screenX-lastMove;
+					lastMove=event.changedTouches.item(0).screenX;
+				}
+				//Move mouse with at least one button pressed
+				else if( event.buttons != null && event.buttons > 0 ){
+					moving=event.screenX-lastMove;
+					lastMove=event.screenX;
+				}
+				//Else, no movement
+				else {
+					moving=0;
+					lastMove=event.screenX;
+				}
+			
+				//Apply movement to the GB emu
+				if( moving < 0 ){
+					//Move Left
+					GameBoyKeyDown("left");
+					GameBoyKeyUp("right");
+				} else if( moving > 0 ){
+					//Move Right
+					GameBoyKeyUp("left");
+					GameBoyKeyDown("right");
+				}
+				else {
+					GameBoyKeyUp("left");
+					GameBoyKeyUp("right");
+				}
+			}
+			
+			//MOUSE INTERACTION
+			//Any key will trigger a "Press B" event on the console emulator, except for Enter (start) and maj (select)
+			function keyDown( event ){
+				//Feed the corresping button to the emulator
+				switch( event.keyCode ){
+					//Start
+					case 13:
+						GameBoyKeyDown("start");
+						break;
+					//Select
+					case 16:
+						GameBoyKeyDown("select");
+						break;
+					//Left
+					case 37:
+					case 65:
+					case 81:
+						GameBoyKeyDown("left");
+						break;
+					//Right
+					case 39:
+					case 68:
+						GameBoyKeyDown("right");
+						break;	
+					//All others keys
+					default:
+						GameBoyKeyDown("b");
+						break;
+				}
+			}
+			function keyUp( event ){
+				//Feed the corresping button to the emulator
+				switch( event.keyCode ){
+					//Start
+					case 13:
+						GameBoyKeyUp("start");
+						break;
+					//Select
+					case 16:
+						GameBoyKeyUp("select");
+						break;
+					//Left
+					case 37:
+					case 65:
+					case 81:
+						GameBoyKeyUp("left");
+						break;
+					//Right
+					case 39:
+					case 68:
+						GameBoyKeyUp("right");
+						break;	
+					//All others keys
+					default:
+						GameBoyKeyUp("b");
+						break;
+				}
+			}
+			/*
+			//KEYBOARD INTERACTION
+			//Keys => emulator button bindings
+			var keyZones = [
+				["right", [39, 68]],
+				["left", [37, 65]],
+				["up", [38, 87]],
+				["down", [40, 83]],
+				["a", [88, 77]],
+				["b", [90, 78, 89]],
+				["select", [16]],
+				["start", [13]]
+			];
+			
+			//variable used to store keypresses and feed them to the emulator
+			var pressed = {};
+			
+			//When key is down, read it and send it to emulator
+			function keyDown(event) {
+				
+				var keyCode = event.keyCode;
+				var keyMapLength = keyZones.length;
+				
+				if (pressed[keyCode]) {
+				    return;
+				} else {
+				    pressed[keyCode] = true;
+				}
+				
+				for (var keyMapIndex = 0; keyMapIndex < keyMapLength; ++keyMapIndex) {
+				    var keyCheck = keyZones[keyMapIndex];
+				    var keysMapped = keyCheck[1];
+				    var keysTotal = keysMapped.length;
+				    for (var index = 0; index < keysTotal; ++index) {
+					if (keysMapped[index] === keyCode) {
+					    GameBoyKeyDown(keyCheck[0]);
+					    try {
+						event.preventDefault();
+					    }
+					    catch (error) { }
+					}
+				    }
+				}
+			}
+			
+			//When key is up, read it and send it to emulator
+			function keyUp(event) {
+				
+				var keyCode = event.keyCode;
+				var keyMapLength = keyZones.length;
+				
+				if (!pressed[keyCode]) {
+				    return;
+				} else {
+				    pressed[keyCode] = false;
+				}
+				
+				for (var keyMapIndex = 0; keyMapIndex < keyMapLength; ++keyMapIndex) {
+				    var keyCheck = keyZones[keyMapIndex];
+				    var keysMapped = keyCheck[1];
+				    var keysTotal = keysMapped.length;
+				    for (var index = 0; index < keysTotal; ++index) {
+					if (keysMapped[index] === keyCode) {
+					    GameBoyKeyUp(keyCheck[0]);
+					    try {
+						event.preventDefault();
+					    }
+					    catch (error) { }
+					}
+				    }
+				}
+			}
+			*/
+		</script>
+		<style type="text/css">
+			/* Top level */
+			html, body {
+				background-color: #000000;
+				color: #FFFFFF;
+				font-family: sans-serif;
+				margin: 0px;
+				padding: 0px;
+			}
+			/* Page container */
+			#container {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				position: relative;
+				display: flex;
+				justify-content: center;
+				flex-direction: column;
+			}
+			/* game container */
+			#game {
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+				width: 480px;
+				height: 432px;
+				/*border: 4px solid #CCCCCC*/
+			}
+			/* Game canvas */
+			#game #screen {
+				display: block;
+			}
+			/* Splash screen (text with a background image) */
+			#game #splash {
+				width: 480px;
+				height: 432px;
+				display: block;
+				position: absolute;
+				top:0px;
+				background-image: url('intro.png');
+				background-position: center; 
+				background-repeat: no-repeat; 
+				text-align: justify;
+				font-size: 20px;
+				color: #000000;
+			}
+			#game #splash ul {
+				text-align:left;
+				margin-top: 10px;
+				margin-left: 30px;
+			}
+			#game #splash #launch {
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+				width: 280px;
+				height: 28px;
+				border: 4px solid #009143;
+				background-color: #8fc34b;
+				text-align: center;
+				padding-top: 10px;
+				margin-top:10px;
+			}
+			#game #launch {
+				color: #FFFFFF;
+				text-decoration: none;
+				font-weight: bold;
+			}
+			/* Instructions written behind the game */
+			#game p {
+				margin: 0px;
+				font-size: 90%;
+				text-align: center;
+			}
+		</style>
+		<!-- Run the game code -->
+		<script type="text/javascript">
+			window.addEventListener("touchend", ios_unlock_sound, false);
+			function ios_unlock_sound(event) {
+				var buffer = g_WebAudioContext.createBuffer(1, 1, 22050);
+				var source = g_WebAudioContext.createBufferSource();
+				source.buffer = buffer;
+				source.connect(g_WebAudioContext.destination);
+				source.noteOn(0);    
+				window.removeEventListener("touchend", ios_unlock_sound, false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="container">
+			<div id="game">
+				<canvas id="screen" width="480" height="432"></canvas>
+				<div id="splash">
+					<div style="padding:0;background-color:rgba(255, 255, 255, 0.6);width:480px;height: 132px;bottom:0;position:absolute;">
+						<div style="padding:20px;">
+							<p>This is an emulation of the real Gameboy game, speed and sound may not be perfect in the emulator.</p>
+							<a id="launch" href="javascript:launchGame();">CLICK TO PLAY</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

@@ -12,7 +12,8 @@
 #include "font.c"
 #include "splashscreen.c"
 #include "splashscreenmap.c"
-
+#include "creditscreen.c"
+#include "creditscreenmap.c"
 
 // =========================================================
 // Global variables, constants etc
@@ -45,6 +46,7 @@ void setupinitialsprites();
 void setupinitialbackground();
 void setupinitialwindow();
 void drawsplashscreen();
+void drawcreditsscreen();
 void playmusicnext();
 void clearbackground();
 void fadeout();
@@ -83,8 +85,12 @@ struct PG gameoversprite;
 void main() {
 	wait_vbl_done();
 	enablesound();
+	drawcreditsscreen();
+	delay(2500);
+	fadeout();
 	drawsplashscreen();
-	
+	fadein();
+
 	// set music playing in bg
  	disable_interrupts();
     add_TIM(playmusicnext);
@@ -94,7 +100,7 @@ void main() {
 
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
-	resetgame(1);
+	resetgame(0);
 	
 	// remove music time interupt handler
 	disable_interrupts();
@@ -381,6 +387,27 @@ void drawsplashscreen(){
 
      // Set screen x,y pos to 0,0 and draw the map 20,18(size of the screen)
      set_bkg_tiles(0,0,20,18,splashscreenmap);
+
+     // Show the background
+     SHOW_BKG;
+
+     // Turn the display on
+     DISPLAY_ON; 
+}
+
+void drawcreditsscreen(){
+	DISPLAY_OFF;	
+	// Load up the tile data	
+     set_bkg_data(0,255,creditscreendata);
+
+    //  // Switch to VRAM
+    //  VBK_REG = 1;
+
+    //  // Switch out of VRAM
+    //  VBK_REG = 0;
+
+     // Set screen x,y pos to 0,0 and draw the map 20,18(size of the screen)
+     set_bkg_tiles(0,0,20,18,creditscreenmap);
 
      // Show the background
      SHOW_BKG;
