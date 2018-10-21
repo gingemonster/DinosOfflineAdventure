@@ -62,13 +62,13 @@ const unsigned char blankmap[1] =
 {
 	0x00
 };
-const UINT8 jump_array[7] = {-26,-3,-1,1,3, 7, 19};
+const UINT8 jump_array[7] = {-26,-3,-1,1,5,10, 14};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
 const UBYTE cleardigitsmap[8] = {11,11,11,11,11,11,11,12};
-const UBYTE highscoremap[10] = {0x1D,0x1E,0x1C,0x1D,0x0B,0x28,0x18,0x24,0x27,0x1A};
+const UBYTE highscoremap[2] = {0x1D,0x1E};
 const UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
@@ -351,7 +351,7 @@ void drawhighscore(){
 
 
 	if(sessionhighscore != 0){
-		set_win_tiles(9 - numdigitsdrawn, 2, 10, 1, highscoremap);
+		set_win_tiles(17 - numdigitsdrawn, 2, 2, 1, highscoremap);
 	}	
 }
 
@@ -532,7 +532,7 @@ void setupinitialsprites(){
 	dino.x = 14;
 	dino.y = 80;
 	dino.width = 18; // technical sprites take up 24px but looks more like he hits at 18
-	dino.height = 24;
+	dino.height = 18; // technically 24 but again looks more like he hits at 18
 	dino.startspriteid = 0;
 	dino.initialized = 1;
 	lastspriteid = 8; // dino fills 0-8
@@ -585,7 +585,7 @@ void generatenextobstacles(){
 			
 			obstacles[currentindex].x = (xoffsetfromstart + (k * 8)); // 2nd obstacle will always be 8 pixels to the right of first
 			obstacles[currentindex].y = 81;
-			obstacles[currentindex].width = 7; // technically 8 but looks clearer and fairer it collisions calculated at 7
+			obstacles[currentindex].width = 6; // technically 8 but looks clearer and fairer it collisions calculated at 7
 			obstacles[currentindex].height = 16;
 
 			if(randomnum==0){
