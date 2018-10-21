@@ -9,6 +9,6 @@ del *.sym
 del *.sav
 
 copy /b ..\..\tools\goombacolor_12_14_2014\goomba.gba+dinosofflineadventure.gb goombadinosofflineadventure.gba
-
+copy dinosofflineadventure.gb .\embedjsplayer\dinosofflineadventure.gb
 REM..\..\tools\bgbw64\bgb64 -rom dinosofflineadventure.gb
 REM..\..\tools\mGBA-0.6.3-win32\mGBA.exe goombadinosofflineadventure.gba

@@ -100,7 +100,7 @@ void main() {
 
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
-	resetgame(0);
+	resetgame(1);
 	
 	// remove music time interupt handler
 	disable_interrupts();
