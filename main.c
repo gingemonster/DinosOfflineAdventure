@@ -29,7 +29,7 @@ struct PG {
 	UBYTE initialized;
 };
 
-void resetgame();
+void resetgame(UBYTE fadeenabled);
 void drawscore();
 void checkInput();
 void checkjumping();
@@ -47,6 +47,8 @@ void setupinitialwindow();
 void drawsplashscreen();
 void playmusicnext();
 void clearbackground();
+void fadeout();
+void fadein();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -92,8 +94,8 @@ void main() {
 
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
-	resetgame();
-
+	resetgame(1);
+	
 	// remove music time interupt handler
 	disable_interrupts();
 	remove_TIM(playmusicnext);	
@@ -387,13 +389,63 @@ void drawsplashscreen(){
      DISPLAY_ON; 
 }
 
+void fadeout(){
+	wait_vbl_done();
+	// looks like magic actually its changing the palette for the background
+	// switching each colour in the palette to black step by step	
+	for(i=0;i!=4;i++){
+		switch(i){
+			case 0:
+				BGP_REG = 0xE4;
+				break;
+			case 1:
+				BGP_REG = 0xF9;
+				break;
+			case 2:
+				BGP_REG = 0xFE;
+				break;
+			case 3:
+				BGP_REG = 0xFF;
+				break;												
+		}
+		delay(100);
+	}	
+}
+
+void fadein(){
+	wait_vbl_done();
+	// looks like magic actually its changing the palette for the background
+	// switching each colour in the palette to white step by step
+	// dont need to start at all back as will have been set that by 
+	// fadeout
+	for(i=1;i!=4;i++){
+		switch(i){
+			case 1:
+				BGP_REG = 0xFE;
+				break;
+			case 2:
+				BGP_REG = 0xF9;
+				break;
+			case 3:
+				BGP_REG = 0xE4;
+				break;											
+		}
+		delay(100);
+	}	
+}
+
 // =========================================================
 // Initialisation / reset functions at very start of game
 // =========================================================
 
-void resetgame(){
-	DISPLAY_OFF; // turn off so we dont see big redraw
-	HIDE_SPRITES;
+void resetgame(UBYTE fadeenabled){
+	if(fadeenabled) {
+		fadeout();
+	}
+	else{
+		DISPLAY_OFF;
+	}
+	
 	gameover = 0;
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
@@ -418,8 +470,13 @@ void resetgame(){
 	clearscore();
 	drawdino(1);
 	drawhighscore();
-	SHOW_SPRITES;
-	DISPLAY_ON;
+
+	if(fadeenabled){
+		fadein();
+	}
+	else{
+		DISPLAY_ON;
+	}
 }
 
 void setupinitialwindow(){
@@ -608,7 +665,7 @@ void checkInput() {
 	else if(joypad() && !running){
 		// not running and they press A so start / reset
 		if(gameover){
-			resetgame();
+			resetgame(0);
 		}
 		laststarttime = sys_time;
 		running = 1;
