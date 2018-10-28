@@ -52,6 +52,7 @@ void clearbackground();
 void fadeout();
 void fadein();
 void drawhighscore();
+void makegameharder(UINT16 time);
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -70,10 +71,10 @@ const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 
 const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
 const UBYTE cleardigitsmap[8] = {11,11,11,11,11,11,11,12};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
-const UINT8 speed = 2;
+UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
-UINT8 frame,lastspriteid,h,i,j,k, currentBeat;
+UINT8 frame,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles = 0;
 INT8 jumpindex,lastobstacleindex;
 INT16 sessionhighscore;
 UBYTE hasmovedy,apressed,running,gameover,splashscreen;
@@ -266,7 +267,14 @@ void scrollbgandobstacles(){
 		set_bkg_tiles(lastscreenquadrantrendered*8,11,8,1,&map[64 + (nextscene * 32) + (lastscreenquadrantrendered * 8)]); // second row
 
 		if(lastscreenquadrantrendered==0||lastscreenquadrantrendered==2){
-			generatenextobstacles();
+			// skip used when we increase speed so that no obstacles 
+			// are shown for a bit
+			if(skipgeneratingobstacles>0){
+				skipgeneratingobstacles--;
+			}
+			else{
+				generatenextobstacles();
+			}
 		}
 
 		// set the last rendereed quadrant
@@ -332,6 +340,7 @@ void drawscore(){
 	}
 
 	time = (sys_time-laststarttime)/30; // per second scoring felt too slow
+	makegameharder(time);
 
 	if(time > sessionhighscore){
 		sessionhighscore = time;
@@ -345,6 +354,7 @@ void drawscore(){
 		time = time/10;
 	}
 }
+
 void drawhighscore(){
 	UINT8 digitmap[1];
 	INT16 time;
@@ -485,6 +495,7 @@ void resetgame(UBYTE fadeenabled){
 	}
 	
 	gameover = 0;
+	speed = 2;
 	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
 	screenpixeloffset = 0;
@@ -649,6 +660,18 @@ void updateSwitches() {
 	SHOW_SPRITES;
 	SHOW_BKG;
 	DISPLAY_ON;	
+}
+
+void makegameharder(UINT16 time){
+	// at multiples of 100 time, pause generating obstacles
+	// so that player has a change to adapt to new speed
+	if(time != 0 && time % 60 == 0){
+		skipgeneratingobstacles = 2;
+	}
+	// 3 times later increase the speed
+	if((time - 3) != 0 && (time - 3) % 60 == 0){
+		speed++;
+	}	
 }
 
 // =========================================================
