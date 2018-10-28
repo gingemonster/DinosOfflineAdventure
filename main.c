@@ -74,7 +74,8 @@ const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 
 const UBYTE gameoverspritemap[8] = {34,28,40,32,42,49,32,45};
 const UBYTE pterodactylspritemap[9] = {13,255,255,14,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE pterodactylspritemapanimated[9] = {15,255,255,16,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const UBYTE cleardigitsmap[8] = {11,11,11,11,11,11,11,12};
+const UBYTE clearscoremap[8] = {11,11,11,11,11,11,11,12};
+const UBYTE clearhighscoresmap[8] = {11,11,11,11,11,11,11,11};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
 UINT8 speed = 2;
 UINT8 skipframesforspriteanim;
@@ -368,6 +369,8 @@ void drawhighscore(){
 	INT8 numdigitsdrawn = 0;
 	time = sessionhighscore;
 
+	// clear any previous
+	set_win_tiles(12, 2, 8, 1, clearhighscoresmap);
 
 	while (time != 0) {
 		digitmap[0] = time % 10 + 12;
@@ -384,7 +387,7 @@ void drawhighscore(){
 }
 
 void clearscore(){
-	set_win_tiles(12, 0, 8, 1, cleardigitsmap);
+	set_win_tiles(12, 0, 8, 1, clearscoremap);
 }
 
 void drawgameover(){
@@ -628,7 +631,7 @@ void generatenextobstacles(){
 			}
 			//  generate pterodactyl
 			else if(randomnum==2){
-				obstacles[currentindex].y = 51;
+				obstacles[currentindex].y = 58;
 				obstacles[currentindex].animated = 1;
 				memcpy(obstacles[currentindex].spritemapids,pterodactylspritemap, sizeof(pterodactylspritemap));
 			}
