@@ -116,7 +116,7 @@ void main() {
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
 			scrollbgandobstacles();
-			if(checkanycollisions()==1){
+			if(checkanycollisions()){
 				set_sprite_tile(1,12); // draw dinos SUPRISE eye
 				drawgameover();
 				playgameover();
@@ -133,8 +133,8 @@ UBYTE checkanycollisions(){
 	// for each obstacle on screen check if dino collides
 	
 	for(k=0;k!=4;k++){
-		if(obstacles[k].initialized==1){
-			if(checkcollides(&dino,&obstacles[k],54) == 1){
+		if(obstacles[k].initialized){
+			if(checkcollides(&dino,&obstacles[k],54)){
 				return 1;
 			}
 		}
@@ -142,19 +142,28 @@ UBYTE checkanycollisions(){
 	return 0;
 }
 
-UBYTE checkcollides(struct PG* one, struct PG* two, UINT8 minx){
+UBYTE checkcollides(struct PG* dino, struct PG* obst, UINT8 minx){
+	// TODO store these rather than calculating every time
+	UINT8 smallerdinox = dino->x + 3;
+	UINT8 smallerdinoy = dino->y + 4;
+	UINT8 smallerdinowidth = dino->width - 6;
+	UINT8 smallerdinoheight = dino->height - 6;
 	// using width and height of each look at x position 
 	// and see if two rectangles overlap range at all
 	// dino is always in quadrant 0 so not point checking objects
 	// that are outside it so x < minx
-	if(one->x > minx | two->x > minx){
+	if(obst->x > minx){
 		return 0;
 	}
+	// to make collisions "look" more pixel accurate
+	// make dino a little shorter and thinner
+
+	
 	return 
-		((one->x >= two->x && one->x <= two->x + two->width) ||
-		(two->x >= one->x && two->x <= one->x + one->width)) &&
-		((one->y <= two->y && one->y >= two->y - two->height) ||
-		(two->y <= one->y && two->y >= one->y - one->height));
+		((smallerdinox >= obst->x && dino->x <= obst->x + obst->width) ||
+		(obst->x >= dino->x && obst->x <= dino->x + smallerdinowidth)) &&
+		((smallerdinoy <= obst->y && smallerdinoy >= obst->y - obst->height) ||
+		(obst->y <= smallerdinoy && obst->y >= smallerdinoy - smallerdinoheight));
 }
 
 void clearbackground(){
