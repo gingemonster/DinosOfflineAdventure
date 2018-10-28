@@ -21,6 +21,7 @@
 //generical character structure: id, position, graphics
 struct PG {
 	UBYTE spritemapids[9]; // dino needs 7, and cacti 2, but to create a generic drawing and moving function everything will assume an 3x3 grid and just not full some
+	UBYTE spritemapidsanimated[9]; 
 	UBYTE startspriteid; // the first sprite id in the collection
 	UINT8 x;
 	UINT8 y;
@@ -28,6 +29,7 @@ struct PG {
 	UINT8 height;
 	UBYTE graphic;
 	UBYTE initialized;
+	UBYTE animated;
 };
 
 void resetgame(UBYTE fadeenabled);
@@ -38,7 +40,8 @@ void updateSwitches();
 void drawdino(UBYTE);
 void drawgameover();
 void playgameover();
-void scrollbgandobstacles();
+void scrollbg();
+void scrollobstacles();
 void playjump();
 void playstep();
 void enablesound();
@@ -68,7 +71,9 @@ const UINT8 jump_array[7] = {-26,-3,-1,1,5,10, 14};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
-const UBYTE gameovermap[8] = {30,24,36,28,38,45,28,41};
+const UBYTE gameoverspritemap[8] = {34,28,40,32,42,49,32,45};
+const UBYTE pterodactylspritemap[9] = {13,255,255,14,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
+const UBYTE pterodactylspritemapanimated[9] = {15,255,255,16,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE cleardigitsmap[8] = {11,11,11,11,11,11,11,12};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
 UINT8 speed = 2;
@@ -117,7 +122,8 @@ void main() {
 			drawscore();
 			checkjumping();
 			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			scrollbgandobstacles();
+			scrollbg();
+			scrollobstacles();
 			if(checkanycollisions()){
 				set_sprite_tile(1,12); // draw dinos SUPRISE eye
 				drawgameover();
@@ -250,7 +256,7 @@ void scrollcharactersprites(struct PG* character, INT8 x, INT8 y){
 	}
 }
 
-void scrollbgandobstacles(){
+void scrollbg(){
 	// scroll bg by speed
 	scroll_bkg(speed,0);
 
@@ -292,11 +298,13 @@ void scrollbgandobstacles(){
 		}
 	}
 
+
+}
+
+void scrollobstacles(){
 	// scroll obstacles
 	for(k=0;k!=4;k++){
 		if(obstacles[k].initialized==1){
-			// TODO converto to generic character scroll method
-			//scrollcharactersprites(&obstacles[k],-speed,0)
 			scroll_sprite(obstacles[k].startspriteid,-speed,0);
 			scroll_sprite(obstacles[k].startspriteid+1,-speed,0);
 			// as x is UINT I assume it will wrap round to 256 automatically?
@@ -305,14 +313,13 @@ void scrollbgandobstacles(){
 			// is just about to go off screen so make inactive instead and move to other end of screen
 			// they are about to get regenerated anyway
 			if(obstacles[k].x < speed){
-
 				obstacles[k].x = 240;
 				obstacles[k].initialized=0;
 			}
 
 			obstacles[k].x = obstacles[k].x - speed;
 		}
-	}
+	}	
 }
 
 UINT8 getscreenquadrant(UINT8 screenoffset){
@@ -381,9 +388,9 @@ void clearscore(){
 }
 
 void drawgameover(){
-	set_sprite_data(13, 35, Font); // load font data
+	set_sprite_data(17, 35, Font); // load font data
 	// copy array of dinos sprite ids into dino.ids using memcpy
-	memcpy(gameoversprite.spritemapids,gameovermap, sizeof(gameovermap)); 
+	memcpy(gameoversprite.spritemapids,gameoverspritemap, sizeof(gameoverspritemap)); 
 	gameoversprite.x = 68;
 	gameoversprite.y = 40;
 	gameoversprite.width = 24; 
@@ -545,7 +552,7 @@ void setupinitialwindow(){
 }
 
 void setupinitialsprites(){
-	set_sprite_data(0, 13, SpritesData);   /* defines the sprite data for all sprites */
+	set_sprite_data(0, 17, SpritesData);   /* defines the sprite data for all sprites */
 
 	// create dino character
 	// copy array of dinos sprite ids into dino.ids using memcpy
@@ -579,8 +586,9 @@ void generatenextobstacles(){
 		initrand(DIV_REG);
 		randomnum = rand() % 3;
 		
-		// if randomnum is 2 then skip creating an obstacle
-		if(randomnum!=2){
+		// if randomnum is 2 then skip creating an obstacle, until we get to time > 60
+		// and then do pterodactyl but only if first ostacle in pair
+		if(randomnum!=2 || ((sys_time-laststarttime)/30 > 10 && k==0)){
 			currentindex = lastobstacleindex + 1;
 			
 			// check if we start recycling sprites
@@ -608,6 +616,7 @@ void generatenextobstacles(){
 			obstacles[currentindex].y = 81;
 			obstacles[currentindex].width = 6; // technically 8 but looks clearer and fairer it collisions calculated at 7
 			obstacles[currentindex].height = 16;
+			obstacles[currentindex].animated = 0;
 
 			if(randomnum==0){
 				//set large cacti sprite map
@@ -615,7 +624,13 @@ void generatenextobstacles(){
 			}
 			else if (randomnum==1){
 				//set small cacti sprite map
-				memcpy(obstacles[currentindex].spritemapids,smallcactispritemap, sizeof(largecactispritemap));
+				memcpy(obstacles[currentindex].spritemapids,smallcactispritemap, sizeof(smallcactispritemap));
+			}
+			//  generate pterodactyl
+			else if(randomnum==2){
+				obstacles[currentindex].y = 51;
+				obstacles[currentindex].animated = 1;
+				memcpy(obstacles[currentindex].spritemapids,pterodactylspritemap, sizeof(pterodactylspritemap));
 			}
 
 			// each obstacle loads 2 sprites so account for second
@@ -624,6 +639,11 @@ void generatenextobstacles(){
 			// load the map images into sprites overwriting any previous ones
 			setupcharactersprites(&obstacles[currentindex]);
 			movecharactersprites(&obstacles[currentindex],3,3,0);
+
+			//skip 2nd obstacle (and set it to not be initialised) as we dont want a cati and pterodactyl together
+			if(randomnum==2){
+				break;
+			}
 		}
 	}
 }
