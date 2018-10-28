@@ -51,6 +51,7 @@ void playmusicnext();
 void clearbackground();
 void fadeout();
 void fadein();
+void drawhighscore();
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character);
@@ -120,6 +121,7 @@ void main() {
 				set_sprite_tile(1,12); // draw dinos SUPRISE eye
 				drawgameover();
 				playgameover();
+				drawhighscore(); // do here as well as in reset so you see new high score on gameover
 				running = 0;
 				gameover = 1;
 				delay(1000); // otherwise user immediately will reset
@@ -506,7 +508,6 @@ void resetgame(UBYTE fadeenabled){
 	clearscore();
 	drawdino(1);
 	drawhighscore();
-
 	if(fadeenabled){
 		fadein();
 	}
