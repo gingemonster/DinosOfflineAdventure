@@ -96,7 +96,8 @@ void main() {
 	speed = 2;
 	skipgeneratingobstacles = 0;
 
-	showsplashandintro();
+	//showsplashandintro();
+	resetgame(1);
 
 	// maing game loop
 	while(1) {
@@ -143,7 +144,7 @@ void showsplashandintro(){
 
 	// wait for any of these buttons to be pressed
 	waitpad(J_A|J_B|J_SELECT|J_START);
-	resetgame(1);
+	
 	
 	// remove music time interupt handler
 	disable_interrupts();
@@ -234,9 +235,9 @@ void animateobstacles(){
 		for(k=0;k!=4;k++){
 			if(obstacles[k].initialized==1&&obstacles[k].animated==1){
 				setupcharactersprites(&obstacles[k],obstanimationframe);
-				obstanimationframe=!obstanimationframe;
 			}
 		}
+		obstanimationframe=!obstanimationframe;
 	}
 }
 
