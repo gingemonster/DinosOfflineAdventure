@@ -96,7 +96,7 @@ void main() {
 	speed = 2;
 	skipgeneratingobstacles = 0;
 
-	//showsplashandintro();
+	showsplashandintro();
 	resetgame(1);
 
 	// maing game loop
@@ -182,8 +182,8 @@ UBYTE checkcollides(struct PG* dino, struct PG* obst, UINT8 minx){
 
 	
 	return 
-		((smallerdinox >= obst->x && dino->x <= obst->x + obst->width) ||
-		(obst->x >= dino->x && obst->x <= dino->x + smallerdinowidth)) &&
+		((smallerdinox >= obst->x && smallerdinox <= obst->x + obst->width) ||
+		(obst->x >= smallerdinox && obst->x <= smallerdinox + smallerdinowidth)) &&
 		((smallerdinoy <= obst->y && smallerdinoy >= obst->y - obst->height) ||
 		(obst->y <= smallerdinoy && obst->y >= smallerdinoy - smallerdinoheight));
 }
@@ -714,13 +714,13 @@ void updateSwitches() {
 }
 
 void makegameharder(UINT16 time){
-	// at multiples of 60 time, pause generating obstacles
+	// at multiples of 100 score, pause generating obstacles
 	// so that player has a change to adapt to new speed
-	if(time != 0 && time % 10 == 0){
+	if(time != 0 && time % 100 == 0){
 		skipgeneratingobstacles = 2;
 	}
 	// 3 times later increase the speed
-	if((time - 3) != 0 && (time - 3) % 10 == 0){
+	if((time - 3) != 0 && (time - 3) % 100 == 0){
 		speed++;
 	}	
 }
