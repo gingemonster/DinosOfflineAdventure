@@ -83,7 +83,7 @@ const UBYTE clearhighscoresmap[8] = {11,11,11,11,11,11,11,11};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
 
 UBYTE hasmovedy,apressed,running,gameover,splashscreen;
-UINT8 skipframesforspriteanim,dinomanimationframe,obstanimationframe,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles,speed;
+UINT8 dinomanimationframe,obstanimationframe,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles,speed;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
 INT8 jumpindex,lastobstacleindex;
 INT16 sessionhighscore;
@@ -529,7 +529,6 @@ void resetgame(UBYTE fadeenabled){
 	
 	gameover = 0;
 	speed = 2;
-	skipframesforspriteanim = speed * 6;
 	jumpindex = -1;
 	screenpixeloffset = 0;
 	lastobstacleindex = -1;
@@ -715,13 +714,13 @@ void updateSwitches() {
 }
 
 void makegameharder(UINT16 time){
-	// at multiples of 100 time, pause generating obstacles
+	// at multiples of 60 time, pause generating obstacles
 	// so that player has a change to adapt to new speed
-	if(time != 0 && time % 60 == 0){
+	if(time != 0 && time % 10 == 0){
 		skipgeneratingobstacles = 2;
 	}
 	// 3 times later increase the speed
-	if((time - 3) != 0 && (time - 3) % 60 == 0){
+	if((time - 3) != 0 && (time - 3) % 10 == 0){
 		speed++;
 	}	
 }
@@ -730,7 +729,7 @@ void makegameharder(UINT16 time){
 // Animation utils
 // =========================================================
 UBYTE shouldrenderanimationframe(){
-	return screenpixeloffset % skipframesforspriteanim == 0;
+	return sys_time % 4 == 0;
 }
 
 // =========================================================
