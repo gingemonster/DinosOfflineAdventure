@@ -1,5 +1,6 @@
 #include <gb/gb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <rand.h>
 #include "sprites.h"
@@ -37,7 +38,8 @@ void drawscore();
 void checkInput();
 void checkjumping();
 void updateSwitches();
-void drawdino(UBYTE);
+void animatedino(UBYTE);
+void animateobstacles();
 void drawgameover();
 void playgameover();
 void scrollbg();
@@ -58,11 +60,13 @@ void drawhighscore();
 void makegameharder(UINT16 time);
 UBYTE shouldrenderanimationframe();
 UINT8 getscreenquadrant(UINT8 screenoffset);
-void setupcharactersprites(struct PG* character);
+void setupcharactersprites(struct PG* character, UBYTE showanimated);
 void movecharactersprites(struct PG* character, UINT8 width, UINT8 height, UINT8 spacing);
 void generatenextobstacles();
 UBYTE checkanycollisions();
 UBYTE checkcollides(struct PG* one,struct PG* two, UINT8 minx);
+void showsplashandintro();
+
 const unsigned char blankmap[1] =
 {
 	0x00
@@ -77,20 +81,51 @@ const UBYTE pterodactylspritemapanimated[9] = {15,255,255,16,255,255,255,255,255
 const UBYTE clearscoremap[8] = {11,11,11,11,11,11,11,12};
 const UBYTE clearhighscoresmap[8] = {11,11,11,11,11,11,11,11};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
-UINT8 speed = 2;
-UINT8 skipframesforspriteanim;
+
+UBYTE hasmovedy,apressed,running,gameover,splashscreen;
+UINT8 skipframesforspriteanim,dinomanimationframe,obstanimationframe,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles,speed;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
-UINT8 frame,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles = 0;
 INT8 jumpindex,lastobstacleindex;
 INT16 sessionhighscore;
-UBYTE hasmovedy,apressed,running,gameover,splashscreen;
-
 
 struct PG obstacles[4]; // 4 in vram at once
 struct PG dino;
 struct PG gameoversprite;
 
 void main() {
+	speed = 2;
+	skipgeneratingobstacles = 0;
+
+	showsplashandintro();
+
+	// maing game loop
+	while(1) {
+		checkInput();
+		updateSwitches();			// Make sure the SHOW_SPRITES and SHOW_BKG switches are on each loop
+		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory
+	
+		if(running) {
+			drawscore();
+			checkjumping();
+			animatedino(hasmovedy);
+			animateobstacles();
+			scrollbg();
+			scrollobstacles();
+			if(checkanycollisions()){
+				set_sprite_tile(1,12); // draw dinos SUPRISE eye
+				drawgameover();
+				playgameover();
+				drawhighscore(); // do here as well as in reset so you see new high score on gameover
+				running = 0;
+				gameover = 1;
+				delay(1000); // otherwise user immediately will reset
+			}
+		}
+	}
+	
+}
+
+void showsplashandintro(){
 	wait_vbl_done();
 	enablesound();
 	drawcreditsscreen();
@@ -112,31 +147,7 @@ void main() {
 	
 	// remove music time interupt handler
 	disable_interrupts();
-	remove_TIM(playmusicnext);	
-
-	while(1) {
-		checkInput();
-		updateSwitches();			// Make sure the SHOW_SPRITES and SHOW_BKG switches are on each loop
-		wait_vbl_done();			// Wait until VBLANK to avoid corrupting visual memory
-	
-		if(running) {
-			drawscore();
-			checkjumping();
-			drawdino(hasmovedy); // always move dino if moved or not so that we process jump or left right in the same place
-			scrollbg();
-			scrollobstacles();
-			if(checkanycollisions()){
-				set_sprite_tile(1,12); // draw dinos SUPRISE eye
-				drawgameover();
-				playgameover();
-				drawhighscore(); // do here as well as in reset so you see new high score on gameover
-				running = 0;
-				gameover = 1;
-				delay(1000); // otherwise user immediately will reset
-			}
-		}
-	}
-	
+	remove_TIM(playmusicnext);		
 }
 
 UBYTE checkanycollisions(){
@@ -190,30 +201,41 @@ void clearbackground(){
 // Screen drawing functions
 // =========================================================
 
-void drawdino(UBYTE jumping){
+void animatedino(UBYTE jumping){
 	// animate legs and play step sound
 	// dont want to play anim every frame so skip some
 	
 	if(shouldrenderanimationframe()){
-		if(frame==0 || jumping){
+		if(dinomanimationframe==0 || jumping){
 			// both legs down
-			frame = 1;
+			dinomanimationframe = 1;
 			set_sprite_tile(5,5); 
 			set_sprite_tile(6,6);
 		}
-		else if(frame==1){
+		else if(dinomanimationframe==1){
 				// right leg up
 				set_sprite_tile(5,5); 
 				set_sprite_tile(6,8);
 				playstep();			
-				frame=2;
+				dinomanimationframe=2;
 		}	
 		else{
 				// left leg up
 				set_sprite_tile(5,7); 
 				set_sprite_tile(6,6);
 				playstep();					
-				frame=0;
+				dinomanimationframe=0;
+		}
+	}
+}
+
+void animateobstacles(){
+	if(shouldrenderanimationframe()){
+		for(k=0;k!=4;k++){
+			if(obstacles[k].initialized==1&&obstacles[k].animated==1){
+				setupcharactersprites(&obstacles[k],obstanimationframe);
+				obstanimationframe=!obstanimationframe;
+			}
 		}
 	}
 }
@@ -401,7 +423,7 @@ void drawgameover(){
 	gameoversprite.startspriteid = 18;
 	gameoversprite.initialized = 1;
 	lastspriteid = 8; // dino fills 0-8
-	setupcharactersprites(&gameoversprite); // & is saying pass a pointer to the function
+	setupcharactersprites(&gameoversprite,0); // & is saying pass a pointer to the function
 	movecharactersprites(&gameoversprite,4,2,2);
 }
 
@@ -527,7 +549,7 @@ void resetgame(UBYTE fadeenabled){
 	setupinitialbackground(); // create initial background
 	setupinitialsprites(); // create initial sprites
 	clearscore();
-	drawdino(1);
+	animatedino(1);
 	drawhighscore();
 	if(fadeenabled){
 		fadein();
@@ -567,7 +589,7 @@ void setupinitialsprites(){
 	dino.startspriteid = 0;
 	dino.initialized = 1;
 	lastspriteid = 8; // dino fills 0-8
-	setupcharactersprites(&dino); // & is saying pass a pointer to the function
+	setupcharactersprites(&dino,0); // & is saying pass a pointer to the function
 	movecharactersprites(&dino,3,3,0);
 }
 
@@ -589,9 +611,9 @@ void generatenextobstacles(){
 		initrand(DIV_REG);
 		randomnum = rand() % 3;
 		
-		// if randomnum is 2 then skip creating an obstacle, until we get to time > 60
+		// if randomnum is 2 then skip creating an obstacle, until we get to time > 30
 		// and then do pterodactyl but only if first ostacle in pair
-		if(randomnum!=2 || ((sys_time-laststarttime)/30 > 10 && k==0)){
+		if(randomnum!=2 || ((sys_time-laststarttime)/30 > 30 && k==0)){
 			currentindex = lastobstacleindex + 1;
 			
 			// check if we start recycling sprites
@@ -620,6 +642,7 @@ void generatenextobstacles(){
 			obstacles[currentindex].width = 6; // technically 8 but looks clearer and fairer it collisions calculated at 7
 			obstacles[currentindex].height = 16;
 			obstacles[currentindex].animated = 0;
+			memcpy(obstacles[currentindex].spritemapidsanimated, 0, 9); // clear
 
 			if(randomnum==0){
 				//set large cacti sprite map
@@ -631,16 +654,17 @@ void generatenextobstacles(){
 			}
 			//  generate pterodactyl
 			else if(randomnum==2){
-				obstacles[currentindex].y = 58;
 				obstacles[currentindex].animated = 1;
+				obstacles[currentindex].y = 58;
 				memcpy(obstacles[currentindex].spritemapids,pterodactylspritemap, sizeof(pterodactylspritemap));
+				memcpy(obstacles[currentindex].spritemapidsanimated,pterodactylspritemapanimated, sizeof(pterodactylspritemapanimated)); 
 			}
 
 			// each obstacle loads 2 sprites so account for second
 			lastspriteid++;
 
 			// load the map images into sprites overwriting any previous ones
-			setupcharactersprites(&obstacles[currentindex]);
+			setupcharactersprites(&obstacles[currentindex],0);
 			movecharactersprites(&obstacles[currentindex],3,3,0);
 
 			//skip 2nd obstacle (and set it to not be initialised) as we dont want a cati and pterodactyl together
@@ -651,17 +675,21 @@ void generatenextobstacles(){
 	}
 }
 
-void setupcharactersprites(struct PG* character){
+void setupcharactersprites(struct PG* character, UBYTE showanimated){
 	//loop map ids and load sprites where there is an id
 	// -> are saying get a property from a pointer
 	UBYTE currentspriteid = character->startspriteid;
 
 	for(i=0;i!=sizeof(character->spritemapids);i++){
 		if(character->spritemapids[i]!=255){ // check if sprite map is empty (255) or not
-			set_sprite_tile(currentspriteid,character->spritemapids[i]);
+			if(showanimated){
+				set_sprite_tile(currentspriteid,character->spritemapidsanimated[i]);
+			}
+			else{
+				set_sprite_tile(currentspriteid,character->spritemapids[i]);
+			}
 			currentspriteid++;
 		}
-		
 	}
 }
 
