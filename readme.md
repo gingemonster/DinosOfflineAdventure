@@ -16,7 +16,7 @@ First go to ([GBDK](http://gbdk.sourceforge.net/)) and follow the instructions t
 
 We are starting to put together a **very limited run** of physical cartridges including a custom cartridge sticker. If you are interested please get in touch [gaming@gingemonster.com](mailto:gaming@gingemonster.com) and we will contact you as soon as we have everything ready. If you donate to download today we will include that against the future purchase price so no reason to delay.
 
-![Cartridge Artwork](./artwork/GB_Label.png)
+![Cartridge Artwork](./artwork/GB_Label.png | width=300)
 
 
 ### Copyright, usage rights and credit
