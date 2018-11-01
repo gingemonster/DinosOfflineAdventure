@@ -58,14 +58,14 @@ void fadeout();
 void fadein();
 void drawhighscore();
 void makegameharder(UINT16 time);
-UBYTE shouldrenderanimationframe();
-UINT8 getscreenquadrant(UINT8 screenoffset);
 void setupcharactersprites(struct PG* character, UBYTE showanimated);
 void movecharactersprites(struct PG* character, UINT8 width, UINT8 height, UINT8 spacing);
 void generatenextobstacles();
+void showsplashandintro();
+UBYTE shouldrenderanimationframe();
 UBYTE checkanycollisions();
 UBYTE checkcollides(struct PG* one,struct PG* two, UINT8 minx);
-void showsplashandintro();
+UINT8 getvramquadrant(UINT8 screenoffset);
 
 const unsigned char blankmap[1] =
 {
@@ -82,7 +82,7 @@ const UBYTE clearscoremap[8] = {11,11,11,11,11,11,11,12};
 const UBYTE clearhighscoresmap[8] = {11,11,11,11,11,11,11,11};
 const UBYTE highscoremap[2] = {0x1D,0x1E};
 
-UBYTE hasmovedy,apressed,running,gameover,splashscreen;
+UBYTE hasdinojustmovedy,apressed,running,gameover,splashscreen;
 UINT8 dinomanimationframe,obstanimationframe,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles,speed;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
 INT8 jumpindex,lastobstacleindex;
@@ -108,7 +108,7 @@ void main() {
 		if(running) {
 			drawscore();
 			checkjumping();
-			animatedino(hasmovedy);
+			animatedino(hasdinojustmovedy);
 			animateobstacles();
 			scrollbg();
 			scrollobstacles();
@@ -124,31 +124,6 @@ void main() {
 		}
 	}
 	
-}
-
-void showsplashandintro(){
-	wait_vbl_done();
-	enablesound();
-	drawcreditsscreen();
-	delay(2500);
-	fadeout();
-	drawsplashscreen();
-	fadein();
-
-	// set music playing in bg
- 	disable_interrupts();
-    add_TIM(playmusicnext);
-    enable_interrupts();
-    TAC_REG = 0x06; // Not sure what this actually does but it overrides a default for the timer I think
-    set_interrupts(TIM_IFLAG|VBL_IFLAG);
-
-	// wait for any of these buttons to be pressed
-	waitpad(J_A|J_B|J_SELECT|J_START);
-	
-	
-	// remove music time interupt handler
-	disable_interrupts();
-	remove_TIM(playmusicnext);		
 }
 
 UBYTE checkanycollisions(){
@@ -188,6 +163,11 @@ UBYTE checkcollides(struct PG* dino, struct PG* obst, UINT8 minx){
 		(obst->y <= smallerdinoy && obst->y >= smallerdinoy - smallerdinoheight));
 }
 
+
+// =========================================================
+// Screen / character drawing functions
+// =========================================================
+
 void clearbackground(){
 	// write a clear sprite to every background block
 	for (j=0 ; j != 32 ; j++){
@@ -197,10 +177,6 @@ void clearbackground(){
 	}
 	move_bkg(0,3);
 }
-
-// =========================================================
-// Screen drawing functions
-// =========================================================
 
 void animatedino(UBYTE jumping){
 	// animate legs and play step sound
@@ -288,7 +264,7 @@ void scrollbg(){
 	screenpixeloffset += speed;
 
 	// get the quadrant of vram the left edge of the screen "screenpixeloffset")" is currently in
-	currentscreenquadrant = getscreenquadrant(screenpixeloffset);
+	currentscreenquadrant = getvramquadrant(screenpixeloffset);
 
 	if(lastscreenquadrantrendered!=currentscreenquadrant){
 		// have just scrolled into new quadrant of screen so time to render previous quadrant
@@ -312,7 +288,7 @@ void scrollbg(){
 	}
 
 	if(screenpixeloffset>=256){
-		// we have reached end of screen so reset
+		// we have reached end of vram width so reset
 		screenpixeloffset = 0;
 		if(nextscene==1){
 			nextscene = 0;
@@ -321,8 +297,6 @@ void scrollbg(){
 			nextscene = 1;
 		}
 	}
-
-
 }
 
 void scrollobstacles(){
@@ -346,7 +320,7 @@ void scrollobstacles(){
 	}	
 }
 
-UINT8 getscreenquadrant(UINT8 screenoffset){
+UINT8 getvramquadrant(UINT8 screenoffset){
 	if(screenoffset < 64){
 		return 0;
 	}
@@ -392,7 +366,7 @@ void drawhighscore(){
 	INT8 numdigitsdrawn = 0;
 	time = sessionhighscore;
 
-	// clear any previous
+	// clear any previous scores
 	set_win_tiles(12, 2, 8, 1, clearhighscoresmap);
 
 	while (time != 0) {
@@ -402,7 +376,6 @@ void drawhighscore(){
 		numdigitsdrawn++;
 		time = time/10;
 	}
-
 
 	if(sessionhighscore != 0){
 		set_win_tiles(17 - numdigitsdrawn, 2, 2, 1, highscoremap);
@@ -518,6 +491,30 @@ void fadein(){
 // =========================================================
 // Initialisation / reset functions at very start of game
 // =========================================================
+void showsplashandintro(){
+	wait_vbl_done();
+	enablesound();
+	drawcreditsscreen();
+	delay(2500);
+	fadeout();
+	drawsplashscreen();
+	fadein();
+
+	// set music playing in bg
+ 	disable_interrupts();
+    add_TIM(playmusicnext);
+    enable_interrupts();
+    TAC_REG = 0x06; // Not sure what this actually does but it overrides a default for the timer I think
+    set_interrupts(TIM_IFLAG|VBL_IFLAG);
+
+	// wait for any of these buttons to be pressed
+	waitpad(J_A|J_B|J_SELECT|J_START);
+	
+	
+	// remove music time interupt handler
+	disable_interrupts();
+	remove_TIM(playmusicnext);		
+}
 
 void resetgame(UBYTE fadeenabled){
 	if(fadeenabled) {
@@ -705,8 +702,8 @@ void setupinitialbackground(){
 	lastscreenquadrantrendered = 0; // set the last screen quadrant rendered
 }
 
+// these are the bits that turn on and off features of the gameboy, sprites, backgrounds...
 void updateSwitches() {
-	
 	SHOW_WIN;
 	SHOW_SPRITES;
 	SHOW_BKG;
@@ -742,7 +739,7 @@ void checkjumping(){
 		if(jumpindex > -1){
 			dino.y= dino.y + jump_array[jumpindex];
 			scrollcharactersprites(&dino,0,jump_array[jumpindex]);
-			hasmovedy = 1;
+			hasdinojustmovedy = 1;
 
 			if(jumpindex == sizeof(jump_array) - 1){
 				// at end of jump index so end
@@ -754,7 +751,7 @@ void checkjumping(){
 			}
 		}
 		else{
-			hasmovedy = 0;
+			hasdinojustmovedy = 0;
 		}
 	}
 }
@@ -787,9 +784,9 @@ void checkInput() {
 		apressed = 0;
 	}
 
-	if (hasmovedy){
+	if (hasdinojustmovedy){
 		// if only moved Y (jump) we still want to wait for 60
-		hasmovedy = 0;
+		hasdinojustmovedy = 0;
 		apressed = 1;
 	}
 }
@@ -982,13 +979,6 @@ void setNote(note *n){
 			NR12_REG = (*n).env; //envelope
 			NR13_REG = (UBYTE)frequencies[(*n).p]; //low bits of frequency
 			NR14_REG = 0x80U | ((UWORD)frequencies[(*n).p]>>8); //high bits of frequency (and sound reset)
-		break;
-		case HARMONY:
-			NR10_REG = 0x01U;
-			NR11_REG = 0x00U; //wave duty for harmony is different
-			NR12_REG = (*n).env;
-			NR13_REG = (UBYTE)frequencies[(*n).p];
-			NR14_REG = 0x82U | ((UWORD)frequencies[(*n).p]>>8);
 		break;
 	}
 }
