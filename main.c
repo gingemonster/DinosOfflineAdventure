@@ -175,7 +175,6 @@ void clearbackground(){
 			set_bkg_tiles(i,j,1,1,blankmap);
 		}
 	}
-	move_bkg(0,3);
 }
 
 void animatedino(UBYTE jumping){
@@ -713,13 +712,16 @@ void updateSwitches() {
 void makegameharder(UINT16 time){
 	// at multiples of 100 score, pause generating obstacles
 	// so that player has a change to adapt to new speed
-	if(time != 0 && time % 100 == 0){
-		skipgeneratingobstacles = 2;
+	// only do it twice 3 times is impossible
+	if(speed != 4){
+		if(time != 0 && time % 100 == 0){
+			skipgeneratingobstacles = 2;
+		}
+		// 3 times later increase the speed
+		if((time - 3) != 0 && (time - 3) % 100 == 0){
+			speed++;
+		}	
 	}
-	// 3 times later increase the speed
-	if((time - 3) != 0 && (time - 3) % 100 == 0){
-		speed++;
-	}	
 }
 
 // =========================================================
