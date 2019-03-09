@@ -19,6 +19,8 @@
 // =========================================================
 // Global variables, constants etc
 // =========================================================
+extern INT16 sessionhighscore;
+
 //generical character structure: id, position, graphics
 struct PG {
 	UBYTE spritemapids[9]; // dino needs 7, and cacti 2, but to create a generic drawing and moving function everything will assume an 3x3 grid and just not full some
@@ -86,13 +88,14 @@ UBYTE hasdinojustmovedy,apressed,running,gameover,splashscreen;
 UINT8 dinomanimationframe,obstanimationframe,lastspriteid,h,i,j,k, currentBeat, skipgeneratingobstacles,speed;
 UINT16 lastscreenquadrantrendered,currentscreenquadrant,nextscene,screenpixeloffset, laststarttime, timerCounter;
 INT8 jumpindex,lastobstacleindex;
-INT16 sessionhighscore;
+
 
 struct PG obstacles[4]; // 4 in vram at once
 struct PG dino;
 struct PG gameoversprite;
 
 void main() {
+	ENABLE_RAM_MBC1;
 	speed = 2;
 	skipgeneratingobstacles = 0;
 
@@ -123,7 +126,7 @@ void main() {
 			}
 		}
 	}
-	
+	DISABLE_RAM_MBC1;
 }
 
 UBYTE checkanycollisions(){
@@ -337,7 +340,6 @@ void drawscore(){
 	UINT8 digitmap[1];
 	INT16 time;
 	INT8 numdigitsdrawn = 0;
-
 	// dont want to redraw more than once per half second
 	if(sys_time % 30 != 0){
 		return;
@@ -363,6 +365,17 @@ void drawhighscore(){
 	UINT8 digitmap[1];
 	INT16 time;
 	INT8 numdigitsdrawn = 0;
+
+
+	//printf("%u",sessionhighscore);
+
+	if(sessionhighscore > 10000){
+		
+		sessionhighscore = 0;
+		//printf("%u",sessionhighscore);
+		
+	}
+
 	time = sessionhighscore;
 
 	// clear any previous scores

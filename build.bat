@@ -1,7 +1,6 @@
-c:\gbdk\bin\lcc -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -c -o main.o main.c
-REM  the wl-g stuff is here so memcopy works no idea what its doing but it works
-REM c:\gbdk\bin\lcc -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wl-g_inc_ram=0xD000 -Wl-g_inc_hiram=0xFFA0 -o dinosofflineadventure.gb main.o
-c:\gbdk\bin\lcc -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -o dinosofflineadventure.gb main.o
+c:\gbdk\bin\lcc -Wa-l -Wf-ba0 -c -o savestate.o savestate.c
+c:\gbdk\bin\lcc -Wa-l -c -o main.o main.c
+c:\gbdk\bin\lcc -Wl-yt3 -Wl-yo4 -Wl-ya4 -o dinosofflineadventure.gb main.o savestate.o
 del *.o
 del *.map
 del *.lst
