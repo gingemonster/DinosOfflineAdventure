@@ -12,6 +12,16 @@ Built as our first Gameboy game and developed using the Gameboy Development Kit 
 
 First go to ([GBDK](http://gbdk.sourceforge.net/)) and follow the instructions there for installing it on your platform. Then open (in your favourite text edit, I recommend VisualStudio Code) and edit build.bat so that the path to GBDK 'c:\gbdk\bin\lcc' matches your setup. Once you have that done just run build.bat in your terminal/command prompt. If all works well the output of this will be dinosofflineadventure.gb being created in the project directory which you can then use in your emulator / flashcard of choice.
 
+#### OSX
+
+Just run the following commands:
+
+```
+chmod u+x build.sh
+./build.sh
+```
+
+
 ### Just want to play it?
 
 If you just want to play the game then heac over to [https://gaming-monster.itch.io/dinos-offline-adventure](https://gaming-monster.itch.io/dinos-offline-adventure) to download or play it online.
