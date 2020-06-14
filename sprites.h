@@ -26,6 +26,6 @@
 /* Bank of tiles. */
 #define SpritesDataBank 0
 /* Start of tile array. */
-extern unsigned char SpritesData[];
+extern const unsigned char SpritesData[];
 
 /* End of SPRITES.H */

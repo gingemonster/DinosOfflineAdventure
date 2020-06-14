@@ -26,6 +26,6 @@
 /* Bank of tiles. */
 #define BackgroundDataBank 0
 /* Start of tile array. */
-extern unsigned char BackgroundData[];
+extern const unsigned char BackgroundData[];
 
 /* End of BACKGROUND.H */

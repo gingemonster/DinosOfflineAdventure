@@ -73,7 +73,7 @@ const unsigned char blankmap[1] =
 {
 	0x00
 };
-const UINT8 jump_array[7] = {-26,-3,-1,1,5,10, 14};
+const INT8 jump_array[7] = {-26,-3,-1,1,5,10,14};
 const UBYTE dinospritemap[9] = {0,1,2,3,4,255,5,6,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE smallcactispritemap[9] = {11,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
 const UBYTE largecactispritemap[9] = {9,255,255,10,255,255,255,255,255}; // use 255 to indicate none as there is no concept of array null values, they would eval to 0
@@ -126,7 +126,6 @@ void main() {
 			}
 		}
 	}
-	DISABLE_RAM_MBC1;
 }
 
 UBYTE checkanycollisions(){
